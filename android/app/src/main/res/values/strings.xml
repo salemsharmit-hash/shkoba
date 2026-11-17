@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Shkoba</string>
+    <string name="title_activity_main">Shkoba</string>
+    <string name="package_name">app.shkoba.game</string>
+    <string name="custom_url_scheme">app.shkoba.game</string>
+</resources>
