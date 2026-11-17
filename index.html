@@ -50,7 +50,7 @@ input[type=number],input[type=text]{font:inherit;padding:8px;border-radius:8px;b
 #me{display:flex;gap:8px;justify-content:center;min-height:100px;align-items:flex-end}
 .card{width:60px;height:90px;border-radius:7px;background:var(--paper);border:1px solid #cfc6aa;box-shadow:0 2px 4px rgba(0,0,0,.45);cursor:pointer;flex:none;transition:transform .12s;position:relative;user-select:none}
 .card svg{width:100%;height:100%;display:block}
-.card.small{width:46px;height:69px}
+.card.small{width:54px;height:81px}
 .card.tiny{width:30px;height:45px;cursor:default}
 .card.back{background:repeating-linear-gradient(45deg,#7a1f2b 0 5px,#a02b3a 5px 10px);border:2px solid var(--gold);cursor:default}
 .card.sel{transform:translateY(-12px);box-shadow:0 0 0 3px var(--gold)}
@@ -73,7 +73,7 @@ td,th{padding:4px 6px;text-align:center;border-bottom:1px solid rgba(255,255,255
 @keyframes chk{0%{transform:translate(-50%,-50%) scale(.2) rotate(-10deg);opacity:0}22%{transform:translate(-50%,-50%) scale(1.3) rotate(4deg);opacity:1}45%{transform:translate(-50%,-50%) scale(1) rotate(0)}100%{transform:translate(-50%,-90%) scale(1);opacity:0}}
 .conf{position:absolute;top:38%;left:50%;width:9px;height:14px;border-radius:2px;animation:conf 1.4s ease-out forwards}
 @keyframes conf{to{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}
-.ghost{position:fixed;z-index:20;pointer-events:none;margin:0;transition:none}
+.flycard{position:fixed;z-index:20;pointer-events:none;margin:0;transition:none}
 #modal.on .box{animation:pop .3s ease-out}
 @keyframes pop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
 .pulse{animation:pulse .6s ease-out}
@@ -215,7 +215,7 @@ function cardSVG(c){
     PIPS[c.r].forEach(([x,y])=>{const sz=c.r===1?30:13;const rot=y>45?` transform="rotate(180 ${x} ${y})"`:'';
       g+=`<use href="#s${c.s}" x="${x-sz/2}" y="${y-sz/2}" width="${sz}" height="${sz}" style="color:${col}"${rot}/>`});
   }else{
-    g+=`<rect x="14" y="21" width="32" height="48" rx="3" fill="none" stroke="${col}" stroke-width="1.5"/><text x="30" y="52" font-size="24" font-weight="800" text-anchor="middle" fill="${col}" font-family="Georgia,serif">${rl(c.r)}</text><use href="#s${c.s}" x="22" y="24" width="16" height="16" style="color:${col}"/><g transform="rotate(180 30 45)"><use href="#s${c.s}" x="22" y="24" width="16" height="16" style="color:${col}"/></g>`;
+    g+=`<rect x="14" y="21" width="32" height="48" rx="3" fill="none" stroke="${col}" stroke-width="1.5"/><text x="30" y="52" font-size="20" font-weight="800" text-anchor="middle" fill="${col}" font-family="Georgia,serif">${rl(c.r)}</text><use href="#s${c.s}" x="24" y="23" width="12" height="12" style="color:${col}"/><g transform="rotate(180 30 45)"><use href="#s${c.s}" x="24" y="23" width="12" height="12" style="color:${col}"/></g>`;
   }
   return `<svg viewBox="0 0 60 90">${g}</svg>`;
 }
@@ -619,7 +619,7 @@ function seatRect(s){
   const el=document.querySelector('[data-seat="'+s+'"]');return (el||$('topSeat')).getBoundingClientRect();
 }
 function ghost(card,r){
-  const g=cardEl(card,'small');g.classList.add('ghost');
+  const g=cardEl(card,'small');g.classList.add('flycard');
   g.style.left=r.left+'px';g.style.top=r.top+'px';g.style.width=r.width+'px';g.style.height=r.height+'px';
   document.body.appendChild(g);return g;
 }
