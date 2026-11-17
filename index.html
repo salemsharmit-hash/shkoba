@@ -68,6 +68,23 @@ td,th{padding:4px 6px;text-align:center;border-bottom:1px solid rgba(255,255,255
 .code{font-size:44px;letter-spacing:8px;text-align:center;color:var(--gold);font-weight:800;direction:ltr}
 .seatrow{display:flex;justify-content:space-between;padding:6px 10px;background:rgba(0,0,0,.2);border-radius:8px;margin:4px 0}
 .err{color:#ffb4a8;text-align:center;font-size:13px;min-height:18px}
+#fx{position:absolute;inset:0;pointer-events:none;z-index:15;overflow:hidden}
+.chk{position:absolute;left:50%;top:36%;font-size:48px;font-weight:900;color:var(--gold);text-shadow:0 3px 14px #000;white-space:nowrap;animation:chk 1.6s ease-out forwards}
+@keyframes chk{0%{transform:translate(-50%,-50%) scale(.2) rotate(-10deg);opacity:0}22%{transform:translate(-50%,-50%) scale(1.3) rotate(4deg);opacity:1}45%{transform:translate(-50%,-50%) scale(1) rotate(0)}100%{transform:translate(-50%,-90%) scale(1);opacity:0}}
+.conf{position:absolute;top:38%;left:50%;width:9px;height:14px;border-radius:2px;animation:conf 1.4s ease-out forwards}
+@keyframes conf{to{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}
+.ghost{position:fixed;z-index:20;pointer-events:none;margin:0;transition:none}
+#modal.on .box{animation:pop .3s ease-out}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
+.pulse{animation:pulse .6s ease-out}
+@keyframes pulse{40%{transform:scale(1.25);color:var(--gold)}}
+.seat.turn .nm{animation:glow 1.2s ease-in-out infinite}
+@keyframes glow{50%{text-shadow:0 0 10px var(--gold)}}
+.card:not(.back):not(.tiny):active{transform:scale(.95)}
+#me .card:hover{transform:translateY(-4px)}
+#me .card.sel{transform:translateY(-12px)}
+button:active{transform:scale(.96)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -127,6 +144,7 @@ td,th{padding:4px 6px;text-align:center;border-bottom:1px solid rgba(255,255,255
   <div id="me"></div>
  </div>
 
+ <div id="fx"></div>
  <div id="modal"><div class="box" id="modalBox"></div></div>
 </div>
 
@@ -146,15 +164,16 @@ const T={
   we:'نحن',they:'هم',you:'أنت',partner:'شريكك',opp:'خصم',
   yourTurn:'دورك: اختر ورقة',pickTable:'اختر ورق الطاولة',waitFor:'دور',
   take:'خذ',clear:'إلغاء',menu:'القائمة',
-  evDrop:'وضع ورقة',evCap:'أخذ',cards:'ورقات',evShk:'شكوبة! +1',
+  evDrop:'وضع ورقة',evCap:'أخذ',cards:'ورقات',evShk:'شكوبة!',diaBonus:'مكافأة الديناري',reset:'تصفير',winTxt:'فوز',
   roundEnd:'نهاية الجولة',item:'البند',mostCards:'أكثر الورق',mostCoins:'أكثر الديناري ♦',haya:'سبعة الديناري (الحاية)',bermila:'أكثر السبعات (البرميلة)',shk:'الشكوبات',total:'المجموع',
   bumped:'تعادل الفريقان في المرحلة الأخيرة، فارتفع هدف الفوز إلى',
   next:'جولة جديدة',newGame:'لعبة جديدة',win:'🎉 فاز فريقك!',lose:'فاز الفريق الآخر',toMenu:'القائمة الرئيسية',
-  rulesText:`<p>٤٠ ورقة: ♥♦♣♠ من ١ (الآص) إلى ٧، ثم الولد J = ٨ والبنت Q = ٩ والملك K = ١٠. الديناري = ♦.</p>
+  rulesText:`<p>٤٠ ورقة: ♥♦♣♠ من ١ (الآص) إلى ٧، ثم البنت Q = ٨ والولد J = ٩ والملك K = ١٠. الديناري = ♦.</p>
   <p>٣ أوراق لكل لاعب و٤ على الطاولة. العب ورقة: إن وُجدت على الطاولة ورقة بنفس الرقم فيجب أخذها، وإلا خذ ورقات مجموعها رقم ورقتك. إن لم يمكن شيء تضعها. الأخذ إجباري عند الإمكان.</p>
-  <p>مسح الطاولة كلها = <b>شكوبة</b> (+١، ولا تُحسب في آخر ورقة). ما يتبقى على الطاولة في النهاية لآخر فريق أخذ.</p>
+  <p>مسح الطاولة كلها = <b>شكوبة</b> وقيمتها رقم الورقة التي مسحت بها (ملك = ١٠، خمسة = ٥...) ولا تُحسب في آخر ورقة ولا في أول لعبة بعد كل توزيع. ما يتبقى على الطاولة في النهاية لآخر فريق أخذ.</p>
   <p>نقاط الجولة: أكثر الورق، أكثر الديناري، سبعة الديناري، أكثر السبعات (عند التعادل الأكثر ستات)، وكل شكوبة.</p>
-  <p>٢ ضد ٢: المقعدان المتجاوران فريق واحد.</p>
+  <p>الديناري: ٨ ديناري = +١٠ نقاط، ٩ ديناري = يرجع مجموع الفريق الآخر إلى صفر، وكل الـ١٠ = فوز فوري باللعبة.</p>
+  <p>٢ ضد ٢: كل لاعب يجلس مقابل شريكه.</p>
   <p>إذا دخل الفريقان معاً المرحلة الأخيرة (٣٠ في ٣١ أو ٦٠ في ٦١) يزيد هدف الفوز ١٠ تلقائياً.</p>`},
  en:{
   title:'Shkoba',sub:'The Libyan card game',lang:'العربية',rules:'Rules',ok:'OK',
@@ -168,15 +187,16 @@ const T={
   we:'Us',they:'Them',you:'You',partner:'Partner',opp:'Opponent',
   yourTurn:'Your turn: pick a card',pickTable:'Pick the table cards',waitFor:'Waiting for',
   take:'Take',clear:'Clear',menu:'Menu',
-  evDrop:'dropped a card',evCap:'captured',cards:'cards',evShk:'Chkobba! +1',
+  evDrop:'dropped a card',evCap:'captured',cards:'cards',evShk:'Chkobba!',diaBonus:'Diamond bonus',reset:'Reset',winTxt:'Win',
   roundEnd:'Round over',item:'Item',mostCards:'Most cards',mostCoins:'Most diamonds ♦',haya:'Seven of diamonds',bermila:'Most sevens (bermila)',shk:'Chkobbas',total:'Total',
   bumped:'Both teams reached the final stretch together, so the target rose to',
   next:'Next round',newGame:'New game',win:'🎉 Your team won!',lose:'The other team won',toMenu:'Main menu',
-  rulesText:`<p>40 cards: ♥♦♣♠ from 1 (Ace) to 7, then Jack = 8, Queen = 9, King = 10. Diamonds are the "coins" suit.</p>
+  rulesText:`<p>40 cards: ♥♦♣♠ from 1 (Ace) to 7, then Queen = 8, Jack = 9, King = 10. Diamonds are the "coins" suit.</p>
   <p>3 cards each, 4 on the table. Play a card: if a table card has the same number you must take it, otherwise take cards adding up to yours. If nothing works, drop it. Capturing is mandatory when possible.</p>
-  <p>Clearing the table = <b>chkobba</b> (+1, not counted on the very last play). Leftover cards go to the last team that captured.</p>
+  <p>Clearing the table = <b>chkobba</b>, worth the number of the card you cleared with (King = 10, a 5 = 5...). Not counted on the very last play, nor on the first play after each deal. Leftover cards go to the last team that captured.</p>
   <p>Round points: most cards, most diamonds, seven of diamonds, most sevens (ties: most sixes), plus each chkobba.</p>
-  <p>2 vs 2: players sitting next to each other are a team.</p>
+  <p>Diamonds: 8 diamonds = +10 points, 9 diamonds = the other team's total drops to zero, all 10 = instant game win.</p>
+  <p>2 vs 2: you sit across from your partner.</p>
   <p>If both teams enter the final stretch together (30 in a 31 game, 60 in a 61 game) the target rises by 10 automatically.</p>`}
 };
 let lang=ls('shkoba-lang')||'ar';
@@ -184,7 +204,7 @@ const t=k=>T[lang][k];
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
 
 /* ================= cards ================= */
-const rl=r=>r===1?'A':r<=7?String(r):['J','Q','K'][r-8];
+const rl=r=>r===1?'A':r<=7?String(r):['Q','J','K'][r-8];
 const COIN=1; // diamonds
 const PIPS={1:[[30,45]],2:[[30,24],[30,66]],3:[[30,24],[30,45],[30,66]],4:[[20,24],[40,24],[20,66],[40,66]],5:[[20,24],[40,24],[30,45],[20,66],[40,66]],6:[[20,24],[40,24],[20,45],[40,45],[20,66],[40,66]],7:[[20,24],[40,24],[30,34],[20,45],[40,45],[20,66],[40,66]]};
 function cardSVG(c){
@@ -204,7 +224,7 @@ function cardEl(c,cls=''){const d=document.createElement('div');
   d.className='card '+cls;d.innerHTML=cardSVG(c);return d}
 
 /* ================= engine (runs on the host/offline device) ================= */
-const teamOf=(n,s)=>n===2?s:(s<2?0:1);
+const teamOf=(n,s)=>n===2?s:s%2; // 2v2: partners sit across from each other
 function newDeck(){const d=[];for(let s=0;s<4;s++)for(let r=1;r<=10;r++)d.push({s,r,id:s*10+r});
   for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]]}return d}
 function legalCaptures(card,table){
@@ -215,13 +235,13 @@ function legalCaptures(card,table){
   return res;
 }
 function makeGame(cfg){
-  const g={n:cfg.n,target:cfg.target,diff:cfg.diff,types:cfg.types.slice(),scores:[0,0],dealer:Math.floor(Math.random()*cfg.n),winner:null,bumped:0};
+  const g={n:cfg.n,target:cfg.target,diff:cfg.diff,types:cfg.types.slice(),scores:[0,0],dealer:Math.floor(Math.random()*cfg.n),winner:null,bumped:0,evN:0,reset:[false,false]};
   newRound(g);return g;
 }
-function dealHands(g){for(let p=0;p<g.n;p++)g.hands[p]=g.deck.splice(0,3)}
+function dealHands(g){for(let p=0;p<g.n;p++)g.hands[p]=g.deck.splice(0,3);g.firstPlay=true}
 function newRound(g){
   g.deck=newDeck();g.table=g.deck.splice(0,4);g.hands=Array.from({length:g.n},()=>[]);dealHands(g);
-  g.cap=[[],[]];g.shk=[0,0];g.last=null;g.turn=(g.dealer+1)%g.n;g.over=false;g.rows=null;g.ev=null;g.bumped=0;
+  g.cap=[[],[]];g.shk=[0,0];g.last=null;g.turn=(g.dealer+1)%g.n;g.over=false;g.rows=null;g.ev=null;g.bumped=0;g.reset=[false,false];
 }
 function doMove(g,seat,cardId,setIds){
   if(g.over||g.turn!==seat)return false;
@@ -239,9 +259,10 @@ function doMove(g,seat,cardId,setIds){
     const ids=new Set(set.map(c=>c.id));g.table=g.table.filter(c=>!ids.has(c.id));
     g.cap[tm].push(card,...set);g.last=tm;
     const lastPlay=g.deck.length===0&&g.hands.every(h=>h.length===0);
-    const shk=g.table.length===0&&!lastPlay;if(shk)g.shk[tm]++;
-    g.ev={type:'cap',seat,cnt:set.length+1,shk};
-  }else{g.table.push(card);g.ev={type:'drop',seat}}
+    const shk=g.table.length===0&&!lastPlay&&!g.firstPlay?card.r:0;if(shk)g.shk[tm]+=shk;
+    g.evN++;g.ev={type:'cap',seat,cnt:set.length+1,shk,card:{s:card.s,r:card.r,id:card.id}};
+  }else{g.table.push(card);g.evN++;g.ev={type:'drop',seat,card:{s:card.s,r:card.r,id:card.id}}}
+  g.firstPlay=false;
   if(g.hands.every(h=>h.length===0)){if(g.deck.length)dealHands(g);else{endRound(g);return true}}
   g.turn=(seat+1)%g.n;return true;
 }
@@ -257,17 +278,28 @@ function endRound(g){
   rows.push({name:'haya',v:hy.map(x=>x?'✓':'—'),p:hy});pts[0]+=hy[0];pts[1]+=hy[1];
   cmp('bermila',cnt(c=>c.r===7),null,cnt(c=>c.r===6));
   rows.push({name:'shk',v:g.shk.slice(),p:g.shk.slice()});pts[0]+=g.shk[0];pts[1]+=g.shk[1];
+  const dn=cnt(c=>c.s===COIN);
+  const bv=['-','-'],bp=[0,0];let instant=null;g.reset=[false,false];
+  for(const k of [0,1]){
+    if(dn[k]>=10){bv[k]='WIN';instant=k}
+    else if(dn[k]===9){bv[k]='RST'}
+    else if(dn[k]===8){bv[k]='B10';bp[k]=10;pts[k]+=10}
+  }
+  rows.push({name:'diaBonus',v:bv,p:bp});
   g.scores=[g.scores[0]+pts[0],g.scores[1]+pts[1]];g.rows=rows;g.pts=pts;g.over=true;
+  for(const k of [0,1])if(dn[k]===9){g.scores[1-k]=0;g.reset[1-k]=true}
   // "both enter the final stretch together" -> target +10
   g.bumped=0;
-  while(g.scores[0]>=g.target-1&&g.scores[1]>=g.target-1){g.target+=10;g.bumped=g.target}
+  while(instantNone(dn)&&g.scores[0]>=g.target-1&&g.scores[1]>=g.target-1){g.target+=10;g.bumped=g.target}
   const w=[0,1].filter(k=>g.scores[k]>=g.target);
   g.winner=w.length===0?null:(w.length===1?w[0]:(g.scores[0]>g.scores[1]?0:1));
+  if(instant!==null){g.winner=instant;g.bumped=0}
   g.dealer=(g.dealer+1)%g.n;
 }
+function instantNone(dn){return dn[0]<10&&dn[1]<10}
 function viewFor(g,seat){
   return {n:g.n,seat,table:g.table,hand:g.hands[seat],counts:g.hands.map(h=>h.length),capCounts:g.cap.map(c=>c.length),
-    scores:g.scores,target:g.target,turn:g.turn,ev:g.ev,over:g.over,rows:g.rows,pts:g.pts,winner:g.winner,bumped:g.bumped,deck:g.deck.length};
+    scores:g.scores,target:g.target,turn:g.turn,ev:g.ev,over:g.over,rows:g.rows,pts:g.pts,winner:g.winner,bumped:g.bumped,deck:g.deck.length,evN:g.evN,reset:g.reset};
 }
 
 /* ================= computer players ================= */
@@ -281,7 +313,7 @@ function unseenInfo(g,seat){
 function capValue(card,set,table){
   let v=set.length+1;
   for(const c of [card,...set]){if(c.s===COIN)v+=1.5;if(c.r===7)v+=2;if(c.r===6)v+=.4;if(c.s===COIN&&c.r===7)v+=6}
-  if(set.length===table.length)v+=8;
+  if(set.length===table.length)v+=card.r+2;
   return v;
 }
 function riskAfter(table,un,oppCards){ // chance an opponent can clear the leftover table
@@ -314,7 +346,7 @@ function cpuChoose(g,seat){
       if(diff==='hard'){
         const ids=new Set(o.set.map(c=>c.id));
         const rest=g.table.filter(c=>!ids.has(c.id));
-        v-=riskAfter(rest,un,oppCards)*9;
+        v-=riskAfter(rest,un,oppCards)*7;
         v-=(o.card.r===7||o.card.s===COIN&&o.card.r>5)?0:0;
       }else v+=Math.random()*1.2;
       if(v>bv){bv=v;best=o}
@@ -362,7 +394,7 @@ function seatTypesOffline(n){return Array.from({length:n},(_,i)=>i===0?'local':'
 function startOffline(){
   NET={role:'local',peer:null,conns:{},mySeat:0};
   G=makeGame({n:cfg.n,target:effTarget(),diff:cfg.diff,types:seatTypesOffline(cfg.n)});
-  resetUI();show('game');broadcast();
+  resetUI();resetAnim();show('game');broadcast();
 }
 function effTarget(){return cfg.customOn?Math.max(5,Math.min(500,+cfg.custom||21)):cfg.target}
 function resetUI(){ui.sel=null;ui.pick=[];$('modal').classList.remove('on');if(ui.cpuTimer){clearTimeout(ui.cpuTimer);ui.cpuTimer=null}}
@@ -411,7 +443,7 @@ function hostStart(){
   const types=NET.lobby.seats.map((s,i)=>i===0?'local':s==='remote'?'remote':'cpu');
   G=makeGame({n:cfg.n,target:effTarget(),diff:cfg.diff,types});
   for(const [seat,conn] of Object.entries(NET.conns))if(conn.open)conn.send({t:'start',n:cfg.n});
-  resetUI();show('game');broadcast();
+  resetUI();resetAnim();show('game');broadcast();
 }
 function joinRoom(){
   $('netErr').textContent='';
@@ -431,7 +463,7 @@ function joinRoom(){
       if(d.t==='welcome'){NET.mySeat=d.seat}
       else if(d.t==='full'){fail(t('roomNotFound'))}
       else if(d.t==='lobby'){NET.lobby=d;cfg.n=d.n;show('lobby');renderLobby()}
-      else if(d.t==='start'){resetUI();G=null;show('game')}
+      else if(d.t==='start'){resetUI();resetAnim();G=null;show('game')}
       else if(d.t==='view'){V=d.v;render()}
     });
     conn.on('close',()=>{if(NET.peer===peer)fail(t('lost'))});
@@ -483,7 +515,7 @@ function nameOf(s){
 }
 function seatEl(s,vertical){
   const d=document.createElement('div');
-  d.className='seat'+(vertical?' v':'')+(V.turn===s&&!V.over?' turn':'')+(teamOf(V.n,s)===teamOf(V.n,V.seat)?' mine':'');
+  d.dataset.seat=s;d.className='seat'+(vertical?' v':'')+(V.turn===s&&!V.over?' turn':'')+(teamOf(V.n,s)===teamOf(V.n,V.seat)?' mine':'');
   const nm=document.createElement('div');nm.className='nm';nm.textContent=nameOf(s);d.appendChild(nm);
   const h=document.createElement('div');h.className='hand';
   for(let i=0;i<V.counts[s];i++)h.appendChild(cardEl(null,'tiny'));
@@ -492,7 +524,7 @@ function seatEl(s,vertical){
 function eventText(){
   const e=V.ev;if(!e)return '';
   let s=nameOf(e.seat)+' '+(e.type==='drop'?t('evDrop'):t('evCap')+' '+e.cnt+' '+t('cards'));
-  if(e.shk)s+=' · '+t('evShk');return s;
+  if(e.shk)s+=' · '+t('evShk')+' +'+e.shk;return s;
 }
 function render(){
   if(!V)return;
@@ -516,16 +548,17 @@ function render(){
   const tb=$('table');tb.innerHTML='';
   V.table.forEach(c=>{
     const cls='small'+(ui.pick.includes(c.id)?' pick':hint.has(c.id)?' hint':'');
-    const e=cardEl(c,cls);e.onclick=()=>tapTable(c);tb.appendChild(e)});
+    const e=cardEl(c,cls);e.dataset.id=c.id;e.onclick=()=>tapTable(c);tb.appendChild(e)});
   // hand
   const me=$('me');me.innerHTML='';
-  V.hand.forEach(c=>{const e=cardEl(c,ui.sel===c.id?'sel':'');e.onclick=()=>tapHand(c);me.appendChild(e)});
+  V.hand.forEach(c=>{const e=cardEl(c,ui.sel===c.id?'sel':'');e.dataset.id=c.id;e.onclick=()=>tapHand(c);me.appendChild(e)});
   $('log').textContent=eventText();
   const mine=V.turn===V.seat&&!V.over;
   $('status').textContent=V.over?t('roundEnd'):mine?(ui.sel?t('pickTable'):t('yourTurn')):t('waitFor')+' '+nameOf(V.turn);
   const caps=selCard?legalCaptures(selCard,V.table):[];
   $('takeBtn').disabled=!(selCard&&matchSet(caps));
   $('clearBtn').disabled=!ui.sel;
+  try{animateChanges()}catch(e){}
   if(V.over)showRoundEnd();else if($('modal').dataset.kind==='round')$('modal').classList.remove('on');
 }
 function matchSet(caps){
@@ -559,8 +592,9 @@ function showRoundEnd(){
   const modal=$('modal');modal.dataset.kind='round';
   const my=teamOf(V.n,V.seat),th=1-my;
   let h=`<h2>${t('roundEnd')}</h2><table><tr><th>${t('item')}</th><th>${t('we')}</th><th>${t('they')}</th></tr>`;
-  V.rows.forEach(r=>h+=`<tr><td>${t(r.name)}</td><td>${r.v[my]}${r.p[my]?' ✓':''}</td><td>${r.v[th]}${r.p[th]?' ✓':''}</td></tr>`);
-  h+=`<tr><th>${t('total')}</th><th>${V.scores[my]} (+${V.pts[my]})</th><th>${V.scores[th]} (+${V.pts[th]})</th></tr></table>`;
+  const cell=x=>({B10:'+10',RST:t('reset'),WIN:t('winTxt')}[x]??x);
+  V.rows.forEach(r=>h+=`<tr><td>${t(r.name)}</td><td>${cell(r.v[my])}${r.p[my]?' ✓':''}</td><td>${cell(r.v[th])}${r.p[th]?' ✓':''}</td></tr>`);
+  h+=`<tr><th>${t('total')}</th><th>${V.scores[my]}${V.reset[my]?'':' (+'+V.pts[my]+')'}</th><th>${V.scores[th]}${V.reset[th]?'':' (+'+V.pts[th]+')'}</th></tr></table>`;
   if(V.bumped)h+=`<p style="text-align:center;color:var(--gold)">${t('bumped')} ${V.bumped}</p>`;
   const done=V.winner!==null;
   if(done)h+=`<p style="text-align:center;font-size:18px">${V.winner===my?t('win'):t('lose')}</p>`;
@@ -575,6 +609,77 @@ function showRoundEnd(){
     if(done){G=makeGame({n:G.n,target:effTarget(),diff:G.diff,types:G.types})}else newRound(G);
     resetUI();broadcast()};
   if(done)$('mMenu').onclick=()=>{modal.classList.remove('on');leaveAll()};
+}
+
+/* ---- animations ---- */
+let PREV={evN:-1,hand:new Set(),table:[],counts:[],rects:{},scores:null};
+function resetAnim(){PREV={evN:-1,hand:new Set(),table:[],counts:[],rects:{},scores:null}}
+function seatRect(s){
+  if(s===V.seat)return $('me').getBoundingClientRect();
+  const el=document.querySelector('[data-seat="'+s+'"]');return (el||$('topSeat')).getBoundingClientRect();
+}
+function ghost(card,r){
+  const g=cardEl(card,'small');g.classList.add('ghost');
+  g.style.left=r.left+'px';g.style.top=r.top+'px';g.style.width=r.width+'px';g.style.height=r.height+'px';
+  document.body.appendChild(g);return g;
+}
+function chkobaFx(points){
+  const fx=$('fx');
+  const d=document.createElement('div');d.className='chk';d.textContent=t('evShk')+' +'+points;fx.appendChild(d);
+  setTimeout(()=>d.remove(),1700);
+  const cols=['#e8c35a','#c0392b','#2e86de','#27ae60','#fbf6e8'];
+  for(let i=0;i<28;i++){const c=document.createElement('div');c.className='conf';c.style.background=cols[i%5];
+    const a=Math.random()*Math.PI*2,rad=90+Math.random()*150;
+    c.style.setProperty('--dx',Math.cos(a)*rad+'px');c.style.setProperty('--dy',(Math.sin(a)*rad+120)+'px');c.style.setProperty('--rot',(Math.random()*720-360)+'deg');
+    fx.appendChild(c);setTimeout(()=>c.remove(),1500)}
+  try{navigator.vibrate&&navigator.vibrate([40,40,80])}catch(e){}
+}
+function animateChanges(){
+  const ev=V.ev,isNew=ev&&V.evN!==PREV.evN;
+  const tbEls={},meEls={};
+  document.querySelectorAll('#table [data-id]').forEach(e=>tbEls[e.dataset.id]=e);
+  document.querySelectorAll('#me [data-id]').forEach(e=>meEls[e.dataset.id]=e);
+  const prevTableIds=new Set(PREV.table.map(c=>c.id));
+  const vanished=PREV.table.filter(c=>!V.table.some(x=>x.id===c.id));
+  const origin=()=>{const r=PREV.rects[ev.card.id];return r||seatRect(ev.seat)};
+  // deal animation for new hand cards
+  let i=0;
+  V.hand.forEach(c=>{if(!PREV.hand.has(c.id)){const e=meEls[c.id];
+    if(e)e.animate([{transform:'translateY(-260px) scale(.5) rotate(-15deg)',opacity:0},{transform:'none',opacity:1}],{duration:420,delay:i*110,easing:'cubic-bezier(.2,.8,.3,1)',fill:'backwards'});i++}});
+  // opponents' hands refilled
+  document.querySelectorAll('.seat .hand').forEach(h=>{const s=+h.parentNode.dataset.seat;
+    if(PREV.counts[s]!==undefined&&V.counts[s]>PREV.counts[s])h.animate([{opacity:0,transform:'translateY(-30px)'},{opacity:1,transform:'none'}],{duration:450})});
+  // table cards
+  V.table.forEach(c=>{
+    const e=tbEls[c.id];if(!e||prevTableIds.has(c.id))return;
+    const fr=e.getBoundingClientRect();
+    if(isNew&&ev.type==='drop'&&ev.card.id===c.id){
+      const o=origin();
+      e.animate([{transform:`translate(${o.left-fr.left}px,${o.top-fr.top}px) scale(${o.width/fr.width||1})`,opacity:.6},{transform:'none',opacity:1}],{duration:380,easing:'ease-out'});
+    }else{
+      e.animate([{transform:'translateY(-220px) scale(.5)',opacity:0},{transform:'none',opacity:1}],{duration:420,delay:(i++)*90,easing:'cubic-bezier(.2,.8,.3,1)',fill:'backwards'});
+    }
+  });
+  // captures
+  if(isNew&&ev.type==='cap'){
+    const tr=seatRect(ev.seat),tx=tr.left+tr.width/2,ty=tr.top+tr.height/2;
+    const rects=vanished.map(c=>PREV.rects[c.id]).filter(Boolean);
+    let cx=0,cy=0;rects.forEach(r=>{cx+=r.left+r.width/2;cy+=r.top+r.height/2});
+    if(rects.length){cx/=rects.length;cy/=rects.length}
+    vanished.forEach(c=>{const r=PREV.rects[c.id];if(!r)return;const g=ghost(c,r);
+      g.animate([{transform:'none',offset:0},{transform:'none',offset:.45},{transform:`translate(${tx-(r.left+r.width/2)}px,${ty-(r.top+r.height/2)}px) scale(.35) rotate(25deg)`,opacity:0,offset:1}],{duration:900,easing:'ease-in'}).onfinish=()=>g.remove()});
+    const o=origin();const pg=ghost(ev.card,o);
+    const ox=o.left+o.width/2,oy=o.top+o.height/2;
+    pg.animate([{transform:'none',offset:0},{transform:`translate(${(rects.length?cx:tx)-ox}px,${(rects.length?cy:ty)-oy}px)`,offset:.4},{transform:`translate(${(rects.length?cx:tx)-ox}px,${(rects.length?cy:ty)-oy}px)`,offset:.5},{transform:`translate(${tx-ox}px,${ty-oy}px) scale(.35) rotate(25deg)`,opacity:0,offset:1}],{duration:900,easing:'ease-in-out'}).onfinish=()=>pg.remove();
+    if(ev.shk)chkobaFx(ev.shk);
+  }
+  // score pulse
+  if(PREV.scores&&(PREV.scores[0]!==V.scores[0]||PREV.scores[1]!==V.scores[1])){const sc=$('score');sc.classList.remove('pulse');void sc.offsetWidth;sc.classList.add('pulse')}
+  // record state
+  PREV.evN=V.evN;PREV.hand=new Set(V.hand.map(c=>c.id));PREV.table=V.table.slice();PREV.counts=V.counts.slice();PREV.scores=V.scores.slice();
+  PREV.rects={};
+  Object.entries(tbEls).forEach(([id,e])=>PREV.rects[id]=e.getBoundingClientRect());
+  Object.entries(meEls).forEach(([id,e])=>PREV.rects[id]=e.getBoundingClientRect());
 }
 
 /* ---- misc wiring ---- */
