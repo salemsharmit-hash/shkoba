@@ -57,6 +57,7 @@ input[type=number],input[type=text]{font:inherit;padding:8px;border-radius:8px;b
 .card.tiny.back{border-width:2px}
 .card.tiny.back::after{border-width:1px;box-shadow:none}
 .card.sel{transform:translateY(-12px);box-shadow:0 0 0 3px var(--gold)}
+.card.chk{box-shadow:0 0 0 2px #e8c35a,0 0 9px 3px rgba(232,195,90,.85)}
 .card.pick{box-shadow:0 0 0 3px #00e5ff}
 .card.hint{box-shadow:0 0 0 2px #fff}
 #status{text-align:center;min-height:20px;font-size:14px}
@@ -274,7 +275,7 @@ function cardSVG(c){
 }
 function cardEl(c,cls=''){const d=document.createElement('div');
   if(!c){d.className='card back '+cls;return d}
-  d.className='card '+cls;d.innerHTML=cardSVG(c);return d}
+  d.className='card '+(c.chk?'chk ':'')+cls;d.innerHTML=cardSVG(c);return d}
 
 /* ================= engine (runs on the host/offline device) ================= */
 const teamOf=(n,s)=>n===2?s:s%2; // 2v2: partners sit across from each other
@@ -329,8 +330,8 @@ function doMove(g,seat,cardId,setIds){
     const ids=new Set(set.map(c=>c.id));g.table=g.table.filter(c=>!ids.has(c.id));
     g.cap[tm].push(card,...set);g.last=tm;
     const lastPlay=g.deck.length===0&&g.hands.every(h=>h.length===0);
-    const shk=g.table.length===0&&!lastPlay&&!g.firstPlay?card.r:0;if(shk)g.shk[tm]+=shk;
-    g.evN++;g.ev={type:'cap',seat,cnt:set.length+1,shk,card:{s:card.s,r:card.r,id:card.id}};
+    const shk=g.table.length===0&&!lastPlay&&!g.firstPlay?card.r:0;if(shk){g.shk[tm]+=shk;card.chk=true}
+    g.evN++;g.ev={type:'cap',seat,cnt:set.length+1,shk,card:{s:card.s,r:card.r,id:card.id,chk:!!shk}};
   }else{g.table.push(card);g.evN++;g.ev={type:'drop',seat,card:{s:card.s,r:card.r,id:card.id}}}
   g.firstPlay=false;
   if(g.hands.every(h=>h.length===0)){if(g.deck.length)dealHands(g);else{endRound(g);return true}}
