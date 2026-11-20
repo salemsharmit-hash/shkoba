@@ -48,11 +48,14 @@ input[type=number],input[type=text]{font:inherit;padding:8px;border-radius:8px;b
 .seat.v .hand .card{margin:-34px 0 0 0}
 .seat.v .hand .card:first-child{margin-top:0}
 #me{display:flex;gap:8px;justify-content:center;min-height:100px;align-items:flex-end}
-.card{width:60px;height:90px;border-radius:7px;background:var(--paper);border:1px solid #cfc6aa;box-shadow:0 2px 4px rgba(0,0,0,.45);cursor:pointer;flex:none;transition:transform .12s;position:relative;user-select:none}
+.card{width:60px;height:90px;border-radius:7px;background:#fff;border:1px solid #bdbdbd;box-shadow:0 2px 4px rgba(0,0,0,.45);cursor:pointer;flex:none;transition:transform .12s;position:relative;user-select:none}
 .card svg{width:100%;height:100%;display:block}
 .card.small{width:54px;height:81px}
 .card.tiny{width:30px;height:45px;cursor:default}
-.card.back{background:repeating-linear-gradient(45deg,#7a1f2b 0 5px,#a02b3a 5px 10px);border:2px solid var(--gold);cursor:default}
+.card.back{background:repeating-linear-gradient(45deg,transparent 0 6px,rgba(255,255,255,.85) 6px 7.4px),repeating-linear-gradient(-45deg,transparent 0 6px,rgba(255,255,255,.85) 6px 7.4px),#e4572e;border:4px solid #fff;outline:1px solid #bdbdbd;outline-offset:-1px;cursor:default}
+.card.back::after{content:"";position:absolute;left:50%;top:50%;width:46%;height:34%;transform:translate(-50%,-50%);border-radius:50%;background:#fff;border:2px solid #b8321a;box-shadow:inset 0 0 0 2px #fff,inset 0 0 0 3px #b8321a}
+.card.tiny.back{border-width:2px}
+.card.tiny.back::after{border-width:1px;box-shadow:none}
 .card.sel{transform:translateY(-12px);box-shadow:0 0 0 3px var(--gold)}
 .card.pick{box-shadow:0 0 0 3px #00e5ff}
 .card.hint{box-shadow:0 0 0 2px #fff}
@@ -84,6 +87,14 @@ td,th{padding:4px 6px;text-align:center;border-bottom:1px solid rgba(255,255,255
 #me .card:hover{transform:translateY(-4px)}
 #me .card.sel{transform:translateY(-12px)}
 button:active{transform:scale(.96)}
+.pile{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin:6px 0;max-height:130px;overflow:auto;direction:ltr}
+.strow{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.12);font-size:14px}
+.strow button.st{padding:2px 13px;font-size:18px;margin:0 6px}
+.strow b{display:inline-block;min-width:26px;text-align:center}
+.deckpile{cursor:pointer;animation:wob 1.3s ease-in-out infinite}
+@keyframes wob{50%{transform:rotate(-4deg) translateY(-3px)}}
+.flipin{animation:flipin .6s ease-out}
+@keyframes flipin{from{transform:rotateY(90deg) scale(.7);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -106,6 +117,7 @@ button:active{transform:scale(.96)}
   <div class="menu-body">
    <div class="opt"><div class="lbl" id="lMode"></div><div class="seg" id="segMode"></div></div>
    <div class="opt"><div class="lbl" id="lFormat"></div><div class="seg" id="segFormat"></div></div>
+   <div class="opt"><div class="lbl" id="lStyle"></div><div class="seg" id="segStyle"></div></div>
    <div class="opt"><div class="lbl" id="lTarget"></div><div class="seg" id="segTarget"></div><input type="number" id="customTarget" min="5" max="500" style="margin-top:6px;display:none"></div>
    <div class="opt"><div class="lbl" id="lDiff"></div><div class="seg" id="segDiff"></div></div>
    <div id="offlineBox"><button id="startBtn" style="width:100%;padding:14px;font-size:18px"></button></div>
@@ -168,12 +180,23 @@ const T={
   roundEnd:'نهاية الجولة',item:'البند',mostCards:'أكثر الورق',mostCoins:'أكثر الديناري ♦',haya:'سبعة الديناري (الحاية)',bermila:'أكثر السبعات (البرميلة)',shk:'الشكوبات',total:'المجموع',
   bumped:'تعادل الفريقان في المرحلة الأخيرة، فارتفع هدف الفوز إلى',
   next:'جولة جديدة',newGame:'لعبة جديدة',win:'🎉 فاز فريقك!',lose:'فاز الفريق الآخر',toMenu:'القائمة الرئيسية',
+  style:'الأسلوب',normal:'عادي',realistic:'واقعي (أنتم تحسبون)',
+  cutTitle:'قطع الأوراق',runner:'الرانر',cutter:'القاطع',tapCut:'اضغط للقطع',yourCard:'ورقتك:',keep:'احتفظ بها',putDown:'ضعها على الطاولة',
+  cutting:'يقطع الأوراق…',deciding:'شاف الورقة ويقرر…',
+  countTitle:'احسب أوراقك',countHint:'احسب الأوراق التي أخذتها. يمكنك التصريح بأي أرقام لكن قد يكشفك الخصم.',
+  cCards:'الورق',cDia:'الديناري ♦',cSev:'السبعات',cSix:'الستات',cH7:'سبعة الديناري',cShk:'نقاط الشكوبة',
+  submitCount:'تأكيد الحساب',countSent:'تم إرسال حسابك.',themDone:'الفريق الآخر أرسل حسابه.',themCounting:'الفريق الآخر لا يزال يحسب…',
+  accTitle:'اتهام أم قبول؟',accHint:'هل تصدّق حسابهم؟ اتهمهم إن ظننت أنهم كذبوا. إن كنت محقاً يخسرون نقطة، وإن أخطأت تخسر أنت نقطة.',
+  accuse:'اتهمهم',accept:'قبول',waitOther:'بانتظار الفريق الآخر…',
+  penalty:'عقوبة',vCaughtThem:'كشفتهم يكذبون! يخسرون نقطة ويُصحَّح حسابهم.',vWrongMine:'اتهام خاطئ: تخسر نقطة.',
+  vCaughtMe:'كشفوك تكذب! تخسر نقطة ويُصحَّح حسابك.',vWrongTheirs:'اتهموك ظلماً: هم يخسرون نقطة.',
   rulesText:`<p>٤٠ ورقة: ♥♦♣♠ من ١ (الآص) إلى ٧، ثم البنت Q = ٨ والولد J = ٩ والملك K = ١٠. الديناري = ♦.</p>
   <p>٣ أوراق لكل لاعب و٤ على الطاولة. العب ورقة: إن وُجدت على الطاولة ورقة بنفس الرقم فيجب أخذها، وإلا خذ ورقات مجموعها رقم ورقتك. إن لم يمكن شيء تضعها. الأخذ إجباري عند الإمكان.</p>
   <p>مسح الطاولة كلها = <b>شكوبة</b> وقيمتها رقم الورقة التي مسحت بها (ملك = ١٠، خمسة = ٥...) ولا تُحسب في آخر ورقة ولا في أول لعبة بعد كل توزيع. ما يتبقى على الطاولة في النهاية لآخر فريق أخذ.</p>
   <p>نقاط الجولة: أكثر الورق، أكثر الديناري، سبعة الديناري، أكثر السبعات (عند التعادل الأكثر ستات)، وكل شكوبة.</p>
   <p>الديناري: ٨ ديناري = +١٠ نقاط، ٩ ديناري = يرجع مجموع الفريق الآخر إلى صفر، وكل الـ١٠ = فوز فوري باللعبة.</p>
   <p>٢ ضد ٢: كل لاعب يجلس مقابل شريكه.</p>
+  <p><b>الأسلوب الواقعي:</b> يُختار رانر عشوائياً، يسلّم الأوراق للاعب على يمينه فيقطعها ويرى الورقة العليا: يحتفظ بها أو يضعها على الطاولة. بعد الجولة الأولى ينتقل الرانر لليمين، ثم لا ينتقل إلا إذا كان فريقه متقدماً (التعادل = يبقى). بعد كل جولة يحسب كل فريق أوراقه بنفسه، ويمكنه الكذب؛ إن كشفه الخصم خسر نقطة، وإن اتهمه الخصم ظلماً خسر المتهِم نقطة.</p>
   <p>إذا دخل الفريقان معاً المرحلة الأخيرة (٣٠ في ٣١ أو ٦٠ في ٦١) يزيد هدف الفوز ١٠ تلقائياً.</p>`},
  en:{
   title:'Shkoba',sub:'The Libyan card game',lang:'العربية',rules:'Rules',ok:'OK',
@@ -191,12 +214,23 @@ const T={
   roundEnd:'Round over',item:'Item',mostCards:'Most cards',mostCoins:'Most diamonds ♦',haya:'Seven of diamonds',bermila:'Most sevens (bermila)',shk:'Chkobbas',total:'Total',
   bumped:'Both teams reached the final stretch together, so the target rose to',
   next:'Next round',newGame:'New game',win:'🎉 Your team won!',lose:'The other team won',toMenu:'Main menu',
+  style:'Style',normal:'Normal',realistic:'Realistic (you count)',
+  cutTitle:'Cut the deck',runner:'Runner',cutter:'Cutter',tapCut:'Tap to cut',yourCard:'Your card:',keep:'Keep it',putDown:'Put it on the table',
+  cutting:'is cutting the deck…',deciding:'saw the card and is deciding…',
+  countTitle:'Count your pile',countHint:'Count the cards you captured. You may report any numbers, but you can be caught.',
+  cCards:'Cards',cDia:'Diamonds ♦',cSev:'Sevens',cSix:'Sixes',cH7:'7 of diamonds',cShk:'Chkobba points',
+  submitCount:'Submit count',countSent:'Your count is submitted.',themDone:'The other team has submitted.',themCounting:'The other team is still counting…',
+  accTitle:'Accuse or accept?',accHint:'Do you believe their count? Accuse them if you think they lied. If you are right they lose a point; if you are wrong you lose a point.',
+  accuse:'Accuse them',accept:'Accept',waitOther:'Waiting for the other team…',
+  penalty:'Penalty',vCaughtThem:'You caught them lying! They lose a point and their count is corrected.',vWrongMine:'Wrong accusation: you lose a point.',
+  vCaughtMe:'They caught you lying! You lose a point and your count is corrected.',vWrongTheirs:'They accused you wrongly: they lose a point.',
   rulesText:`<p>40 cards: ♥♦♣♠ from 1 (Ace) to 7, then Queen = 8, Jack = 9, King = 10. Diamonds are the "coins" suit.</p>
   <p>3 cards each, 4 on the table. Play a card: if a table card has the same number you must take it, otherwise take cards adding up to yours. If nothing works, drop it. Capturing is mandatory when possible.</p>
   <p>Clearing the table = <b>chkobba</b>, worth the number of the card you cleared with (King = 10, a 5 = 5...). Not counted on the very last play, nor on the first play after each deal. Leftover cards go to the last team that captured.</p>
   <p>Round points: most cards, most diamonds, seven of diamonds, most sevens (ties: most sixes), plus each chkobba.</p>
   <p>Diamonds: 8 diamonds = +10 points, 9 diamonds = the other team's total drops to zero, all 10 = instant game win.</p>
   <p>2 vs 2: you sit across from your partner.</p>
+  <p><b>Realistic style:</b> a random Runner hands the deck to the player on their right, who cuts it and sees the top card: keep it or put it on the table. After round one the Runner passes to the right, then only passes when their team is ahead (a tie means they stay). After each round every team counts its own pile and may lie. If the other team catches the lie the liar loses a point; if they accuse wrongly, the accuser loses a point.</p>
   <p>If both teams enter the final stretch together (30 in a 31 game, 60 in a 61 game) the target rises by 10 automatically.</p>`}
 };
 let lang=ls('shkoba-lang')||'ar';
@@ -206,18 +240,37 @@ function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorag
 /* ================= cards ================= */
 const rl=r=>r===1?'A':r<=7?String(r):['Q','J','K'][r-8];
 const COIN=1; // diamonds
-const PIPS={1:[[30,45]],2:[[30,24],[30,66]],3:[[30,24],[30,45],[30,66]],4:[[20,24],[40,24],[20,66],[40,66]],5:[[20,24],[40,24],[30,45],[20,66],[40,66]],6:[[20,24],[40,24],[20,45],[40,45],[20,66],[40,66]],7:[[20,24],[40,24],[30,34],[20,45],[40,45],[20,66],[40,66]]};
+const PIPS={1:[[30,45]],2:[[30,24],[30,66]],3:[[30,24],[30,45],[30,66]],4:[[22,26],[38,26],[22,64],[38,64]],5:[[22,26],[38,26],[30,45],[22,64],[38,64]],6:[[22,26],[38,26],[22,45],[38,45],[22,64],[38,64]],7:[[22,26],[38,26],[30,35],[22,45],[38,45],[22,64],[38,64]]};
+function courtHalf(r){ // upper half of a traditional court figure (Anglo-American style, as on Tunisian packs)
+  const K='#1c1b22',skin='#f2cfa5',hair='#6b3f1d',red='#c0392b',blue='#2c4ea1',gold='#e0b11f';
+  let g=`<path d="M12 45L14 35Q20 31 30 31Q40 31 46 35L48 45Z" fill="${red}" stroke="${K}" stroke-width=".8"/>`
+   +`<path d="M30 31L24 45H36Z" fill="${gold}" stroke="${K}" stroke-width=".6"/>`
+   +`<path d="M14 35L12 45H19L20 33Z" fill="${blue}"/><path d="M46 35L48 45H41L40 33Z" fill="${blue}"/>`
+   +`<rect x="27.5" y="28" width="5" height="4" fill="${skin}"/><ellipse cx="30" cy="25" rx="5.2" ry="6" fill="${skin}" stroke="${K}" stroke-width=".7"/>`
+   +`<circle cx="28" cy="24.5" r=".6" fill="${K}"/><circle cx="32" cy="24.5" r=".6" fill="${K}"/>`;
+  if(r===10)g+=`<path d="M25 26Q30 36 35 26Q33 30 30 30Q27 30 25 26Z" fill="${hair}"/><path d="M26.5 22H33.5" stroke="${hair}" stroke-width="1"/>`
+   +`<path d="M24.5 20L25.5 12L28 16L30 11L32 16L34.5 12L35.5 20Z" fill="${gold}" stroke="${K}" stroke-width=".7"/>`;
+  else if(r===8)g+=`<path d="M24.5 22Q22 30 25 38L26 28ZM35.5 22Q38 30 35 38L34 28Z" fill="${hair}"/>`
+   +`<path d="M25 20L26 14L28.5 17L30 13L31.5 17L34 14L35 20Z" fill="${gold}" stroke="${K}" stroke-width=".7"/><circle cx="30" cy="12.3" r="1.2" fill="${red}"/>`;
+  else g+=`<path d="M24.8 22Q30 12 35.2 22Q30 19 24.8 22Z" fill="${blue}" stroke="${K}" stroke-width=".7"/><path d="M33 17Q40 11 41 17" fill="none" stroke="${red}" stroke-width="1.6"/>`
+   +`<path d="M24.6 24Q24 28 25.8 29L25.5 24ZM35.4 24Q36 28 34.2 29L34.5 24Z" fill="${hair}"/>`;
+  return g;
+}
 function cardSVG(c){
-  const col=c.s<2?'#c0392b':'#1c1b22';
-  let g=`<text x="6" y="14" font-size="13" font-weight="800" fill="${col}" font-family="Georgia,serif">${rl(c.r)}</text><use href="#s${c.s}" x="4" y="16" width="9" height="9" style="color:${col}"/>`;
-  g+=`<g transform="rotate(180 30 45)"><text x="6" y="14" font-size="13" font-weight="800" fill="${col}" font-family="Georgia,serif">${rl(c.r)}</text><use href="#s${c.s}" x="4" y="16" width="9" height="9" style="color:${col}"/></g>`;
+  const col=c.s<2?'#d02a1c':'#1c1b22';
+  const idx=(x,end)=>`<text x="${x}" y="13" font-size="13" font-weight="800" text-anchor="${end?'end':'start'}" fill="${col}" font-family="Arial,Helvetica,sans-serif">${rl(c.r)}</text><use href="#s${c.s}" x="${end?x-8.5:x-1}" y="15" width="9.5" height="9.5" style="color:${col}"/>`;
+  let g=idx(5,false)+idx(55,true)+`<g transform="rotate(180 30 45)">${idx(5,false)}${idx(55,true)}</g>`;
   if(c.r<=7){
-    PIPS[c.r].forEach(([x,y])=>{const sz=c.r===1?30:13;const rot=y>45?` transform="rotate(180 ${x} ${y})"`:'';
+    PIPS[c.r].forEach(([x,y])=>{const sz=c.r===1?34:15;const rot=y>45?` transform="rotate(180 ${x} ${y})"`:'';
       g+=`<use href="#s${c.s}" x="${x-sz/2}" y="${y-sz/2}" width="${sz}" height="${sz}" style="color:${col}"${rot}/>`});
   }else{
-    g+=`<rect x="14" y="21" width="32" height="48" rx="3" fill="none" stroke="${col}" stroke-width="1.5"/><text x="30" y="52" font-size="20" font-weight="800" text-anchor="middle" fill="${col}" font-family="Georgia,serif">${rl(c.r)}</text><use href="#s${c.s}" x="24" y="23" width="12" height="12" style="color:${col}"/><g transform="rotate(180 30 45)"><use href="#s${c.s}" x="24" y="23" width="12" height="12" style="color:${col}"/></g>`;
+    g+=`<rect x="15" y="19" width="30" height="52" rx="2" fill="#fffbe8" stroke="${col}" stroke-width="1"/>`
+     +`<g transform="translate(30 45) scale(.74) translate(-30 -45)">${courtHalf(c.r)}</g>`
+     +`<g transform="rotate(180 30 45)"><g transform="translate(30 45) scale(.74) translate(-30 -45)">${courtHalf(c.r)}</g></g>`
+     +`<line x1="15" y1="45" x2="45" y2="45" stroke="${col}" stroke-width=".5"/>`
+     +`<use href="#s${c.s}" x="16.5" y="20.5" width="6.5" height="6.5" style="color:${col}"/><g transform="rotate(180 30 45)"><use href="#s${c.s}" x="16.5" y="20.5" width="6.5" height="6.5" style="color:${col}"/></g>`;
   }
-  return `<svg viewBox="0 0 60 90">${g}</svg>`;
+  return `<svg viewBox="0 0 60 90" style="direction:ltr">${g}</svg>`;
 }
 function cardEl(c,cls=''){const d=document.createElement('div');
   if(!c){d.className='card back '+cls;return d}
@@ -235,16 +288,33 @@ function legalCaptures(card,table){
   return res;
 }
 function makeGame(cfg){
-  const g={n:cfg.n,target:cfg.target,diff:cfg.diff,types:cfg.types.slice(),scores:[0,0],dealer:Math.floor(Math.random()*cfg.n),winner:null,bumped:0,evN:0,reset:[false,false]};
+  const g={n:cfg.n,target:cfg.target,diff:cfg.diff,types:cfg.types.slice(),scores:[0,0],dealer:Math.floor(Math.random()*cfg.n),winner:null,bumped:0,evN:0,reset:[false,false],real:!!cfg.real,roundNo:1};
+  if(g.real)g.runner=g.dealer;
   newRound(g);return g;
 }
-function dealHands(g){for(let p=0;p<g.n;p++)g.hands[p]=g.deck.splice(0,3);g.firstPlay=true}
+function dealHands(g,extra){for(let p=0;p<g.n;p++)g.hands[p]=(extra&&extra.seat===p)?[extra.card,...g.deck.splice(0,2)]:g.deck.splice(0,3);g.firstPlay=true}
 function newRound(g){
-  g.deck=newDeck();g.table=g.deck.splice(0,4);g.hands=Array.from({length:g.n},()=>[]);dealHands(g);
-  g.cap=[[],[]];g.shk=[0,0];g.last=null;g.turn=(g.dealer+1)%g.n;g.over=false;g.rows=null;g.ev=null;g.bumped=0;g.reset=[false,false];
+  g.deck=newDeck();g.hands=Array.from({length:g.n},()=>[]);
+  g.cap=[[],[]];g.shk=[0,0];g.last=null;g.over=false;g.rows=null;g.ev=null;g.bumped=0;g.reset=[false,false];
+  g.rep=[null,null];g.dec=[null,null];g.truth=null;g.verdict=[null,null];g.cutCard=null;
+  if(g.real){g.table=[];g.phase='cut';g.cutter=(g.runner+1)%g.n;g.turn=-1}
+  else{g.table=g.deck.splice(0,4);dealHands(g);g.phase='play';g.turn=(g.dealer+1)%g.n}
+}
+/* realistic style: the cutter taps to cut, sees the top card, keeps it (in hand) or puts it on the table */
+function doCut(g,seat){
+  if(g.phase!=='cut'||seat!==g.cutter||g.cutCard)return false;
+  const k=1+Math.floor(Math.random()*(g.deck.length-1));
+  g.deck=g.deck.slice(k).concat(g.deck.slice(0,k));g.cutCard=g.deck[0];return true;
+}
+function doKeep(g,seat,keep){
+  if(g.phase!=='cut'||seat!==g.cutter||!g.cutCard)return false;
+  const c=g.deck.shift();
+  g.table=keep?g.deck.splice(0,4):[c,...g.deck.splice(0,3)];
+  dealHands(g,keep?{seat,card:c}:null);
+  g.cutCard=null;g.phase='play';g.turn=(g.runner+1)%g.n;return true;
 }
 function doMove(g,seat,cardId,setIds){
-  if(g.over||g.turn!==seat)return false;
+  if(g.over||g.turn!==seat||g.phase!=='play')return false;
   const card=g.hands[seat].find(c=>c.id===cardId);if(!card)return false;
   const caps=legalCaptures(card,g.table);
   let set=null;
@@ -266,19 +336,54 @@ function doMove(g,seat,cardId,setIds){
   if(g.hands.every(h=>h.length===0)){if(g.deck.length)dealHands(g);else{endRound(g);return true}}
   g.turn=(seat+1)%g.n;return true;
 }
+function tally(g){return [0,1].map(k=>{const c=g.cap[k];return {cards:c.length,dia:c.filter(x=>x.s===COIN).length,sev:c.filter(x=>x.r===7).length,six:c.filter(x=>x.r===6).length,h7:c.some(x=>x.s===COIN&&x.r===7)?1:0,shk:g.shk[k]}})}
 function endRound(g){
   if(g.last!==null&&g.table.length){g.cap[g.last].push(...g.table);g.table=[]}
-  const cap=g.cap,cnt=x=>[0,1].map(k=>cap[k].filter(x).length);
+  g.over=true;
+  if(g.real){g.truth=tally(g);g.phase='count';return} // players count (and may bluff) before scoring
+  finalize(g,tally(g),[0,0]);
+}
+const REPKEYS=['cards','dia','sev','six','h7','shk'];
+function cleanRep(r){const o={},lim={cards:40,dia:10,sev:4,six:4,h7:1,shk:200};for(const k of REPKEYS)o[k]=Math.max(0,Math.min(lim[k],Math.floor(+(r&&r[k])||0)));return o}
+function sameRep(a,b){return REPKEYS.every(k=>a[k]===b[k])}
+function doReport(g,seat,rep){
+  if(g.phase!=='count')return false;const k=teamOf(g.n,seat);if(g.rep[k])return false;
+  g.rep[k]=cleanRep(rep);if(g.rep[0]&&g.rep[1])g.phase='accuse';return true;
+}
+function doAccuse(g,seat,acc){
+  if(g.phase!=='accuse')return false;const k=teamOf(g.n,seat);if(g.dec[k]!==null)return false;
+  g.dec[k]=acc?'acc':'ok';if(g.dec[0]!==null&&g.dec[1]!==null)resolveAccuse(g);return true;
+}
+function resolveAccuse(g){
+  const pen=[0,0],final=[g.rep[0],g.rep[1]];g.verdict=[null,null];
+  for(const a of [0,1]){
+    if(g.dec[a]!=='acc')continue;const b=1-a;
+    if(sameRep(g.rep[b],g.truth[b])){pen[a]++;g.verdict[a]='wrong'}  // false accusation: accuser loses a point
+    else{pen[b]++;g.verdict[a]='caught';final[b]=g.truth[b]}          // caught lying: liar loses a point, count corrected
+  }
+  finalize(g,final,pen);g.phase='result';
+}
+function applyAct(g,seat,m){
+  if(!g||!m)return false;
+  if(m.t==='move')return doMove(g,seat,m.cardId,m.setIds);
+  if(m.t==='cut')return doCut(g,seat);
+  if(m.t==='keep')return doKeep(g,seat,!!m.keep);
+  if(m.t==='report')return doReport(g,seat,m.rep);
+  if(m.t==='accuse')return doAccuse(g,seat,!!m.acc);
+  return false;
+}
+function finalize(g,R,pen){
   const pts=[0,0],rows=[];
   const cmp=(name,a,b,tie)=>{let r=[0,0];if(a[0]>a[1])r=[1,0];else if(a[1]>a[0])r=[0,1];else if(tie){const b2=tie;if(b2[0]>b2[1])r=[1,0];else if(b2[1]>b2[0])r=[0,1]}
     rows.push({name,v:b||a,p:r});pts[0]+=r[0];pts[1]+=r[1]};
-  cmp('mostCards',[cap[0].length,cap[1].length]);
-  cmp('mostCoins',cnt(c=>c.s===COIN));
-  const hy=[cap[0].some(c=>c.s===COIN&&c.r===7)?1:0,cap[1].some(c=>c.s===COIN&&c.r===7)?1:0];
+  cmp('mostCards',[R[0].cards,R[1].cards]);
+  cmp('mostCoins',[R[0].dia,R[1].dia]);
+  const hy=[R[0].h7?1:0,R[1].h7?1:0];
   rows.push({name:'haya',v:hy.map(x=>x?'✓':'—'),p:hy});pts[0]+=hy[0];pts[1]+=hy[1];
-  cmp('bermila',cnt(c=>c.r===7),null,cnt(c=>c.r===6));
-  rows.push({name:'shk',v:g.shk.slice(),p:g.shk.slice()});pts[0]+=g.shk[0];pts[1]+=g.shk[1];
-  const dn=cnt(c=>c.s===COIN);
+  cmp('bermila',[R[0].sev,R[1].sev],null,[R[0].six,R[1].six]);
+  const sk=[R[0].shk,R[1].shk];
+  rows.push({name:'shk',v:sk,p:sk.slice()});pts[0]+=sk[0];pts[1]+=sk[1];
+  const dn=[R[0].dia,R[1].dia];
   const bv=['-','-'],bp=[0,0];let instant=null;g.reset=[false,false];
   for(const k of [0,1]){
     if(dn[k]>=10){bv[k]='WIN';instant=k}
@@ -286,7 +391,8 @@ function endRound(g){
     else if(dn[k]===8){bv[k]='B10';bp[k]=10;pts[k]+=10}
   }
   rows.push({name:'diaBonus',v:bv,p:bp});
-  g.scores=[g.scores[0]+pts[0],g.scores[1]+pts[1]];g.rows=rows;g.pts=pts;g.over=true;
+  if(g.real){rows.push({name:'penalty',v:pen.map(x=>x?'−'+x:'—'),p:pen.map(x=>-x)});pts[0]-=pen[0];pts[1]-=pen[1]}
+  g.scores=[Math.max(0,g.scores[0]+pts[0]),Math.max(0,g.scores[1]+pts[1])];g.rows=rows;g.pts=pts;g.over=true;
   for(const k of [0,1])if(dn[k]===9){g.scores[1-k]=0;g.reset[1-k]=true}
   // "both enter the final stretch together" -> target +10
   g.bumped=0;
@@ -294,12 +400,19 @@ function endRound(g){
   const w=[0,1].filter(k=>g.scores[k]>=g.target);
   g.winner=w.length===0?null:(w.length===1?w[0]:(g.scores[0]>g.scores[1]?0:1));
   if(instant!==null){g.winner=instant;g.bumped=0}
-  g.dealer=(g.dealer+1)%g.n;
+  if(g.real){ // Runner passes right after round 1, then only when their team is strictly ahead
+    const rt=teamOf(g.n,g.runner);
+    const pass=g.roundNo===1||g.scores[rt]>g.scores[1-rt];
+    g.roundNo++;if(pass)g.runner=(g.runner+1)%g.n;g.dealer=g.runner;
+  }else g.dealer=(g.dealer+1)%g.n;
 }
 function instantNone(dn){return dn[0]<10&&dn[1]<10}
 function viewFor(g,seat){
+  const my=teamOf(g.n,seat),show=g.real&&(g.phase==='count'||g.phase==='accuse');
   return {n:g.n,seat,table:g.table,hand:g.hands[seat],counts:g.hands.map(h=>h.length),capCounts:g.cap.map(c=>c.length),
-    scores:g.scores,target:g.target,turn:g.turn,ev:g.ev,over:g.over,rows:g.rows,pts:g.pts,winner:g.winner,bumped:g.bumped,deck:g.deck.length,evN:g.evN,reset:g.reset};
+    scores:g.scores,target:g.target,turn:g.turn,ev:g.ev,over:g.over,rows:g.rows,pts:g.pts,winner:g.winner,bumped:g.bumped,deck:g.deck.length,evN:g.evN,reset:g.reset,
+    real:g.real,phase:g.phase,runner:g.runner,cutter:g.cutter,cutDone:!!g.cutCard,cutCard:seat===g.cutter?g.cutCard:null,
+    myCap:show?g.cap[my]:null,rep:g.phase==='count'?g.rep.map((r,k)=>k===my?r:null):g.rep,repDone:g.rep.map(r=>!!r),decDone:g.dec.map(d=>d!==null),verdict:g.verdict};
 }
 
 /* ================= computer players ================= */
@@ -364,13 +477,34 @@ function cpuChoose(g,seat){
   return {card:drop,set:null};
 }
 
+const seatsOfTeam=(g,k)=>Array.from({length:g.n},(_,i)=>i).filter(i=>teamOf(g.n,i)===k);
+function cpuBluff(g,k){
+  const r={...g.truth[k]};
+  const p={easy:.15,medium:.25,hard:.3}[g.diff]||.2;
+  if(Math.random()<p){const ks=['cards','dia','sev','shk'];const f=ks[Math.floor(Math.random()*ks.length)];r[f]+=1+(Math.random()<.4?1:0)}
+  return r;
+}
+function realCpuStep(){ // one computer action in the realistic phases; returns true if something changed
+  const g=G;if(!g||!g.real)return false;
+  if(g.phase==='cut'&&g.types[g.cutter]==='cpu'){
+    if(!g.cutCard)return doCut(g,g.cutter);
+    const c=g.cutCard;return doKeep(g,g.cutter,c.s===COIN||c.r===7||(c.r>=5&&Math.random()<.5));
+  }
+  if(g.phase==='count'){for(const k of [0,1])if(!g.rep[k]&&seatsOfTeam(g,k).every(s=>g.types[s]==='cpu'))return doReport(g,seatsOfTeam(g,k)[0],cpuBluff(g,k))}
+  if(g.phase==='accuse'){for(const k of [0,1])if(g.dec[k]===null&&seatsOfTeam(g,k).every(s=>g.types[s]==='cpu')){
+    const lie=!sameRep(g.rep[1-k],g.truth[1-k]);const pr={easy:[.25,.2],medium:[.5,.1],hard:[.8,.05]}[g.diff]||[.5,.1];
+    return doAccuse(g,seatsOfTeam(g,k)[0],Math.random()<(lie?pr[0]:pr[1]));
+  }}
+  return false;
+}
+
 /* ================= controller (offline / host / client) ================= */
 const $=id=>document.getElementById(id);
 let G=null,V=null,NET={role:'local',peer:null,conns:{},lobby:null,mySeat:0,code:null};
-let cfg={mode:'offline',n:2,target:31,custom:21,customOn:false,diff:'medium'};
+let cfg={mode:'offline',n:2,target:31,custom:21,customOn:false,diff:'medium',real:false};
 try{Object.assign(cfg,JSON.parse(ls('shkoba-cfg')||'{}'))}catch(e){}
 function saveCfg(){ls('shkoba-cfg',JSON.stringify(cfg))}
-let ui={sel:null,pick:[],cpuTimer:null};
+let ui={sel:null,pick:[],cpuTimer:null,realTimer:null,rep:null};
 
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id))}
 
@@ -383,21 +517,25 @@ function broadcast(){
     ui.cpuTimer=setTimeout(()=>{ui.cpuTimer=null;if(!G||G.over)return;const s=G.turn;if(G.types[s]!=='cpu')return;
       const m=cpuChoose(G,s);doMove(G,s,m.card.id,m.set?m.set.map(c=>c.id):null);broadcast()},950);
   }
+  if(G.real&&['cut','count','accuse'].includes(G.phase)&&!ui.realTimer){
+    ui.realTimer=setTimeout(()=>{ui.realTimer=null;if(G&&realCpuStep())broadcast()},1200);
+  }
 }
-function submitMove(cardId,setIds){
-  if(NET.role==='client'){NET.conn.send({t:'move',cardId,setIds});return}
-  if(doMove(G,NET.mySeat,cardId,setIds))broadcast();
+function submitAct(m){
+  if(NET.role==='client'){NET.conn.send(m);return}
+  if(applyAct(G,NET.mySeat,m))broadcast();
 }
+function submitMove(cardId,setIds){submitAct({t:'move',cardId,setIds})}
 
 /* ---- start / lobby ---- */
 function seatTypesOffline(n){return Array.from({length:n},(_,i)=>i===0?'local':'cpu')}
 function startOffline(){
   NET={role:'local',peer:null,conns:{},mySeat:0};
-  G=makeGame({n:cfg.n,target:effTarget(),diff:cfg.diff,types:seatTypesOffline(cfg.n)});
+  G=makeGame({n:cfg.n,target:effTarget(),diff:cfg.diff,types:seatTypesOffline(cfg.n),real:cfg.real});
   resetUI();resetAnim();show('game');broadcast();
 }
 function effTarget(){return cfg.customOn?Math.max(5,Math.min(500,+cfg.custom||21)):cfg.target}
-function resetUI(){ui.sel=null;ui.pick=[];$('modal').classList.remove('on');if(ui.cpuTimer){clearTimeout(ui.cpuTimer);ui.cpuTimer=null}}
+function resetUI(){ui.sel=null;ui.pick=[];ui.rep=null;if(ui.realTimer){clearTimeout(ui.realTimer);ui.realTimer=null};$('modal').classList.remove('on');if(ui.cpuTimer){clearTimeout(ui.cpuTimer);ui.cpuTimer=null}}
 function leaveAll(){
   resetUI();G=null;V=null;
   try{if(NET.peer)NET.peer.destroy()}catch(e){}
@@ -429,7 +567,7 @@ function createRoom(attempt=0){
     });
     conn.on('data',d=>{
       const seat=+Object.keys(NET.conns).find(k=>NET.conns[k]===conn);
-      if(d&&d.t==='move'&&G){if(doMove(G,seat,d.cardId,d.setIds))broadcast()}
+      if(d&&G&&d.t&&applyAct(G,seat,d))broadcast();
     });
     const gone=()=>{
       const k=Object.keys(NET.conns).find(k=>NET.conns[k]===conn);if(k===undefined)return;
@@ -441,7 +579,7 @@ function createRoom(attempt=0){
 }
 function hostStart(){
   const types=NET.lobby.seats.map((s,i)=>i===0?'local':s==='remote'?'remote':'cpu');
-  G=makeGame({n:cfg.n,target:effTarget(),diff:cfg.diff,types});
+  G=makeGame({n:cfg.n,target:effTarget(),diff:cfg.diff,types,real:cfg.real});
   for(const [seat,conn] of Object.entries(NET.conns))if(conn.open)conn.send({t:'start',n:cfg.n});
   resetUI();resetAnim();show('game');broadcast();
 }
@@ -478,10 +616,11 @@ function seg(id,items,cur,on){
 function renderMenu(){
   document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';
   $('langBtn').textContent=t('lang');$('mTitle').textContent=t('title');$('mSub').textContent=t('sub');
-  $('lMode').textContent=t('mode');$('lFormat').textContent=t('format');$('lTarget').textContent=t('target');$('lDiff').textContent=t('diff');
+  $('lStyle').textContent=t('style');$('lMode').textContent=t('mode');$('lFormat').textContent=t('format');$('lTarget').textContent=t('target');$('lDiff').textContent=t('diff');
   $('lJoin').textContent=t('join');$('joinBtn').textContent=t('joinBtn');$('joinCode').placeholder=t('joinCode');
   $('startBtn').textContent=t('start');$('createBtn').textContent=t('create');$('rulesBtn').textContent=t('rules');
   seg('segMode',[['offline',t('offline')],['online',t('online')]],cfg.mode,v=>{cfg.mode=v;saveCfg()});
+  seg('segStyle',[[0,t('normal')],[1,t('realistic')]],cfg.real?1:0,v=>{cfg.real=!!v;saveCfg()});
   seg('segFormat',[[2,t('f1')],[4,t('f2')]],cfg.n,v=>{cfg.n=v;saveCfg()});
   seg('segTarget',[[31,'31'],[61,'61'],['c',t('custom')]],cfg.customOn?'c':cfg.target,v=>{
     if(v==='c')cfg.customOn=true;else{cfg.customOn=false;cfg.target=v}saveCfg()});
@@ -516,7 +655,7 @@ function nameOf(s){
 function seatEl(s,vertical){
   const d=document.createElement('div');
   d.dataset.seat=s;d.className='seat'+(vertical?' v':'')+(V.turn===s&&!V.over?' turn':'')+(teamOf(V.n,s)===teamOf(V.n,V.seat)?' mine':'');
-  const nm=document.createElement('div');nm.className='nm';nm.textContent=nameOf(s);d.appendChild(nm);
+  const nm=document.createElement('div');nm.className='nm';nm.textContent=nameOf(s)+(V.real&&V.runner===s?' 🏃':'');d.appendChild(nm);
   const h=document.createElement('div');h.className='hand';
   for(let i=0;i<V.counts[s];i++)h.appendChild(cardEl(null,'tiny'));
   d.appendChild(h);return d;
@@ -532,7 +671,7 @@ function render(){
   const my=teamOf(V.n,V.seat),th=1-my;
   $('menuBtn').textContent=t('menu');
   $('score').innerHTML=`${t('we')} <b>${V.scores[my]}</b> : <b>${V.scores[th]}</b> ${t('they')}`;
-  $('targetTxt').textContent=t('target')+' '+V.target;
+  $('targetTxt').textContent=t('target')+' '+V.target+(V.real?' · 🏃 '+nameOf(V.runner):'');
   $('takeBtn').textContent=t('take');$('clearBtn').textContent=t('clear');
   // seats
   const pos={top:null,left:null,right:null};
@@ -548,18 +687,21 @@ function render(){
   const tb=$('table');tb.innerHTML='';
   V.table.forEach(c=>{
     const cls='small'+(ui.pick.includes(c.id)?' pick':hint.has(c.id)?' hint':'');
-    const e=cardEl(c,cls);e.dataset.id=c.id;e.onclick=()=>tapTable(c);tb.appendChild(e)});
+    const e=cardEl(c,cls);e.dataset.id=c.id;e.style.rotate=((c.id*37%9)-4)+'deg';e.onclick=()=>tapTable(c);tb.appendChild(e)});
   // hand
   const me=$('me');me.innerHTML='';
   V.hand.forEach(c=>{const e=cardEl(c,ui.sel===c.id?'sel':'');e.dataset.id=c.id;e.onclick=()=>tapHand(c);me.appendChild(e)});
   $('log').textContent=eventText();
   const mine=V.turn===V.seat&&!V.over;
-  $('status').textContent=V.over?t('roundEnd'):mine?(ui.sel?t('pickTable'):t('yourTurn')):t('waitFor')+' '+nameOf(V.turn);
+  $('status').textContent=V.real&&V.phase==='cut'?t('cutTitle'):V.real&&V.phase==='count'?t('countTitle'):V.real&&V.phase==='accuse'?t('accTitle'):V.over?t('roundEnd'):mine?(ui.sel?t('pickTable'):t('yourTurn')):t('waitFor')+' '+nameOf(V.turn);
   const caps=selCard?legalCaptures(selCard,V.table):[];
   $('takeBtn').disabled=!(selCard&&matchSet(caps));
   $('clearBtn').disabled=!ui.sel;
   try{animateChanges()}catch(e){}
-  if(V.over)showRoundEnd();else if($('modal').dataset.kind==='round')$('modal').classList.remove('on');
+  if(V.real&&(V.phase==='cut'||V.phase==='count'||V.phase==='accuse'))realModal();
+  else if(V.over)showRoundEnd();
+  else if(['round','real'].includes($('modal').dataset.kind))$('modal').classList.remove('on');
+  if(V.phase==='play')ui.rep=null;
 }
 function matchSet(caps){
   if(!ui.pick.length)return null;
@@ -588,13 +730,60 @@ $('takeBtn').onclick=()=>{
 $('clearBtn').onclick=()=>{ui.sel=null;ui.pick=[];render()};
 $('menuBtn').onclick=()=>leaveAll();
 
+const REPLBL={cards:'cCards',dia:'cDia',sev:'cSev',six:'cSix',h7:'cH7',shk:'cShk'};
+function realModal(){
+  const modal=$('modal');modal.dataset.kind='real';
+  const my=teamOf(V.n,V.seat),th=1-my;let h='';
+  if(V.phase==='cut'){
+    const me=V.cutter===V.seat;
+    h=`<h2>${t('cutTitle')}</h2><p style="text-align:center">🏃 ${t('runner')}: <b>${nameOf(V.runner)}</b> · ${t('cutter')}: <b>${nameOf(V.cutter)}</b></p>`;
+    if(me&&!V.cutCard)h+=`<div style="display:flex;justify-content:center;margin:12px"><div id="deckBtn" class="deckpile" style="position:relative;width:60px;height:90px"><div class="card back" style="position:absolute;left:0;top:0"></div><div class="card back" style="position:absolute;left:-2px;top:-2px"></div><div class="card back" style="position:absolute;left:-4px;top:-4px"></div></div></div><div class="acts"><button id="cutBtn">${t('tapCut')}</button></div>`;
+    else if(me)h+=`<p style="text-align:center">${t('yourCard')}</p><div style="display:flex;justify-content:center;margin:10px" id="cutShow"></div><div class="acts"><button id="keepBtn">${t('keep')}</button><button class="ghost" id="downBtn">${t('putDown')}</button></div>`;
+    else h+=`<p style="text-align:center">${nameOf(V.cutter)} ${V.cutDone?t('deciding'):t('cutting')}</p>`;
+  }else if(V.phase==='count'){
+    h=`<h2>${t('countTitle')}</h2>`;
+    if(!V.repDone[my]){
+      if(!ui.rep)ui.rep={cards:0,dia:0,sev:0,six:0,h7:0,shk:0};
+      h+=`<p style="font-size:13px;opacity:.85;text-align:center">${t('countHint')}</p><div class="pile" id="pile"></div>`;
+      REPKEYS.forEach(k=>{const v=ui.rep[k];
+        h+=`<div class="strow"><span>${t(REPLBL[k])}</span><span><button class="ghost st" data-k="${k}" data-d="-1">−</button><b>${k==='h7'?(v?'✓':'—'):v}</b><button class="ghost st" data-k="${k}" data-d="1">+</button></span></div>`});
+      h+=`<div class="acts" style="margin-top:10px"><button id="subBtn">${t('submitCount')}</button></div>`;
+    }else h+=`<p style="text-align:center">${t('countSent')}</p><p style="text-align:center;opacity:.85">${V.repDone[th]?t('themDone'):t('themCounting')}</p>`;
+  }else{
+    h=`<h2>${t('accTitle')}</h2><table><tr><th></th><th>${t('we')}</th><th>${t('they')}</th></tr>`;
+    const c=(k,v)=>k==='h7'?(v?'✓':'—'):v;
+    REPKEYS.forEach(k=>h+=`<tr><td>${t(REPLBL[k])}</td><td>${c(k,V.rep[my][k])}</td><td>${c(k,V.rep[th][k])}</td></tr>`);
+    h+=`</table>`;
+    if(!V.decDone[my])h+=`<p style="font-size:13px;opacity:.85;text-align:center">${t('accHint')}</p><div class="acts"><button id="accBtn">${t('accuse')}</button><button class="ghost" id="okBtn">${t('accept')}</button></div>`;
+    else h+=`<p style="text-align:center">${t('waitOther')}</p>`;
+  }
+  $('modalBox').innerHTML=h;modal.classList.add('on');
+  const on=(id,f)=>{const e=$(id);if(e)e.onclick=f};
+  const doCutAnim=()=>{const d=$('deckBtn');if(!d)return submitAct({t:'cut'});d.style.animation='none';const [a,b,c]=d.children;
+    a.animate([{transform:'none'},{transform:'translate(-70px,-6px) rotate(-10deg)',offset:.4},{transform:'translate(-70px,-6px) rotate(-10deg)',offset:.6},{transform:'translate(-2px,2px)'}],{duration:800,easing:'ease-in-out'});
+    b.animate([{transform:'none'},{transform:'translate(-70px,-10px) rotate(-12deg)',offset:.4},{transform:'translate(-70px,-10px) rotate(-12deg)',offset:.6},{transform:'translate(0,-2px)'}],{duration:800,easing:'ease-in-out'});
+    c.animate([{transform:'none'},{transform:'translate(40px,-4px) rotate(8deg)',offset:.4},{transform:'translate(40px,-4px) rotate(8deg)',offset:.6},{transform:'none'}],{duration:800,easing:'ease-in-out'});
+    setTimeout(()=>submitAct({t:'cut'}),820)};
+  on('deckBtn',doCutAnim);on('cutBtn',doCutAnim);
+  on('keepBtn',()=>submitAct({t:'keep',keep:true}));on('downBtn',()=>submitAct({t:'keep',keep:false}));
+  on('accBtn',()=>submitAct({t:'accuse',acc:true}));on('okBtn',()=>submitAct({t:'accuse',acc:false}));
+  on('subBtn',()=>{const r=ui.rep;ui.rep=null;submitAct({t:'report',rep:r})});
+  const cs=$('cutShow');if(cs&&V.cutCard){const e=cardEl(V.cutCard,'small flipin');cs.appendChild(e)}
+  const pile=$('pile');if(pile&&V.myCap)V.myCap.slice().sort((a,b)=>a.s-b.s||a.r-b.r).forEach(c=>pile.appendChild(cardEl(c,'tiny')));
+  modal.querySelectorAll('button.st').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k,d=+b.dataset.d,lim={cards:40,dia:10,sev:4,six:4,h7:1,shk:200}[k];
+    ui.rep[k]=Math.max(0,Math.min(lim,ui.rep[k]+d));realModal()});
+}
 function showRoundEnd(){
   const modal=$('modal');modal.dataset.kind='round';
   const my=teamOf(V.n,V.seat),th=1-my;
   let h=`<h2>${t('roundEnd')}</h2><table><tr><th>${t('item')}</th><th>${t('we')}</th><th>${t('they')}</th></tr>`;
   const cell=x=>({B10:'+10',RST:t('reset'),WIN:t('winTxt')}[x]??x);
-  V.rows.forEach(r=>h+=`<tr><td>${t(r.name)}</td><td>${cell(r.v[my])}${r.p[my]?' ✓':''}</td><td>${cell(r.v[th])}${r.p[th]?' ✓':''}</td></tr>`);
+  V.rows.forEach(r=>h+=`<tr><td>${t(r.name)}</td><td>${cell(r.v[my])}${r.p[my]>0?' ✓':''}</td><td>${cell(r.v[th])}${r.p[th]>0?' ✓':''}</td></tr>`);
   h+=`<tr><th>${t('total')}</th><th>${V.scores[my]}${V.reset[my]?'':' (+'+V.pts[my]+')'}</th><th>${V.scores[th]}${V.reset[th]?'':' (+'+V.pts[th]+')'}</th></tr></table>`;
+  if(V.real&&V.verdict){const L=x=>h+=`<p style="text-align:center;color:#ffd9a0">${x}</p>`;
+    if(V.verdict[my]==='caught')L(t('vCaughtThem'));if(V.verdict[my]==='wrong')L(t('vWrongMine'));
+    if(V.verdict[th]==='caught')L(t('vCaughtMe'));if(V.verdict[th]==='wrong')L(t('vWrongTheirs'))}
   if(V.bumped)h+=`<p style="text-align:center;color:var(--gold)">${t('bumped')} ${V.bumped}</p>`;
   const done=V.winner!==null;
   if(done)h+=`<p style="text-align:center;font-size:18px">${V.winner===my?t('win'):t('lose')}</p>`;
@@ -606,7 +795,7 @@ function showRoundEnd(){
   $('modalBox').innerHTML=h;modal.classList.add('on');
   if(isHost)$('mNext').onclick=()=>{
     modal.classList.remove('on');
-    if(done){G=makeGame({n:G.n,target:effTarget(),diff:G.diff,types:G.types})}else newRound(G);
+    if(done){G=makeGame({n:G.n,target:effTarget(),diff:G.diff,types:G.types,real:G.real})}else newRound(G);
     resetUI();broadcast()};
   if(done)$('mMenu').onclick=()=>{modal.classList.remove('on');leaveAll()};
 }
@@ -632,6 +821,7 @@ function chkobaFx(points){
     const a=Math.random()*Math.PI*2,rad=90+Math.random()*150;
     c.style.setProperty('--dx',Math.cos(a)*rad+'px');c.style.setProperty('--dy',(Math.sin(a)*rad+120)+'px');c.style.setProperty('--rot',(Math.random()*720-360)+'deg');
     fx.appendChild(c);setTimeout(()=>c.remove(),1500)}
+  try{$('table').animate([{transform:'none'},{transform:'translateX(-7px) rotate(-.7deg)'},{transform:'translateX(7px) rotate(.7deg)'},{transform:'translateX(-4px)'},{transform:'none'}],{duration:380})}catch(e){}
   try{navigator.vibrate&&navigator.vibrate([40,40,80])}catch(e){}
 }
 function animateChanges(){
@@ -644,8 +834,11 @@ function animateChanges(){
   const origin=()=>{const r=PREV.rects[ev.card.id];return r||seatRect(ev.seat)};
   // deal animation for new hand cards
   let i=0;
+  const tcr=$('table').getBoundingClientRect(),dcx=tcr.left+tcr.width/2,dcy=tcr.top+tcr.height/2;
   V.hand.forEach(c=>{if(!PREV.hand.has(c.id)){const e=meEls[c.id];
-    if(e)e.animate([{transform:'translateY(-260px) scale(.5) rotate(-15deg)',opacity:0},{transform:'none',opacity:1}],{duration:420,delay:i*110,easing:'cubic-bezier(.2,.8,.3,1)',fill:'backwards'});i++}});
+    if(e){const fr=e.getBoundingClientRect(),dx=dcx-fr.left-fr.width/2,dy=dcy-fr.top-fr.height/2,sg=i%2?1:-1;
+      e.animate([{transform:`translate(${dx}px,${dy}px) scale(.55) rotate(${sg*(14+i*5)}deg)`,opacity:0},{opacity:1,offset:.2},{transform:`translate(${dx*.25}px,${dy*.25-18}px) scale(1.06) rotate(${-sg*4}deg)`,offset:.75},{transform:'none',opacity:1}],{duration:620,delay:i*140,easing:'cubic-bezier(.25,.8,.3,1)',fill:'backwards'})}
+    i++}});
   // opponents' hands refilled
   document.querySelectorAll('.seat .hand').forEach(h=>{const s=+h.parentNode.dataset.seat;
     if(PREV.counts[s]!==undefined&&V.counts[s]>PREV.counts[s])h.animate([{opacity:0,transform:'translateY(-30px)'},{opacity:1,transform:'none'}],{duration:450})});
@@ -655,9 +848,10 @@ function animateChanges(){
     const fr=e.getBoundingClientRect();
     if(isNew&&ev.type==='drop'&&ev.card.id===c.id){
       const o=origin();
-      e.animate([{transform:`translate(${o.left-fr.left}px,${o.top-fr.top}px) scale(${o.width/fr.width||1})`,opacity:.6},{transform:'none',opacity:1}],{duration:380,easing:'ease-out'});
+      const dx=o.left-fr.left,dy=o.top-fr.top,sg=(c.id%2?1:-1);
+      e.animate([{transform:`translate(${dx}px,${dy}px) scale(${o.width/fr.width||1}) rotate(${sg*10}deg)`,opacity:.75},{transform:`translate(${dx*.4}px,${dy*.4-38}px) scale(1.14) rotate(${sg*5}deg)`,opacity:1,offset:.55},{transform:'scale(.96)',offset:.88},{transform:'none'}],{duration:520,easing:'ease-out'});
     }else{
-      e.animate([{transform:'translateY(-220px) scale(.5)',opacity:0},{transform:'none',opacity:1}],{duration:420,delay:(i++)*90,easing:'cubic-bezier(.2,.8,.3,1)',fill:'backwards'});
+      e.animate([{transform:`translateY(-220px) scale(.5) rotate(${(i%2?1:-1)*20}deg)`,opacity:0},{transform:'translateY(6px) scale(1.04)',offset:.8,opacity:1},{transform:'none',opacity:1}],{duration:520,delay:(i++)*110,easing:'cubic-bezier(.2,.8,.3,1)',fill:'backwards'});
     }
   });
   // captures
@@ -666,8 +860,8 @@ function animateChanges(){
     const rects=vanished.map(c=>PREV.rects[c.id]).filter(Boolean);
     let cx=0,cy=0;rects.forEach(r=>{cx+=r.left+r.width/2;cy+=r.top+r.height/2});
     if(rects.length){cx/=rects.length;cy/=rects.length}
-    vanished.forEach(c=>{const r=PREV.rects[c.id];if(!r)return;const g=ghost(c,r);
-      g.animate([{transform:'none',offset:0},{transform:'none',offset:.45},{transform:`translate(${tx-(r.left+r.width/2)}px,${ty-(r.top+r.height/2)}px) scale(.35) rotate(25deg)`,opacity:0,offset:1}],{duration:900,easing:'ease-in'}).onfinish=()=>g.remove()});
+    vanished.forEach((c,vi)=>{const r=PREV.rects[c.id];if(!r)return;const g=ghost(c,r);
+      g.animate([{transform:'none',offset:0},{transform:'scale(1.12) rotate(-3deg)',offset:.4},{transform:'scale(1.05)',offset:.5},{transform:`translate(${tx-(r.left+r.width/2)}px,${ty-(r.top+r.height/2)}px) scale(.35) rotate(${vi%2?28:-22}deg)`,opacity:0,offset:1}],{duration:950,delay:vi*60,easing:'ease-in'}).onfinish=()=>g.remove()});
     const o=origin();const pg=ghost(ev.card,o);
     const ox=o.left+o.width/2,oy=o.top+o.height/2;
     pg.animate([{transform:'none',offset:0},{transform:`translate(${(rects.length?cx:tx)-ox}px,${(rects.length?cy:ty)-oy}px)`,offset:.4},{transform:`translate(${(rects.length?cx:tx)-ox}px,${(rects.length?cy:ty)-oy}px)`,offset:.5},{transform:`translate(${tx-ox}px,${ty-oy}px) scale(.35) rotate(25deg)`,opacity:0,offset:1}],{duration:900,easing:'ease-in-out'}).onfinish=()=>pg.remove();
