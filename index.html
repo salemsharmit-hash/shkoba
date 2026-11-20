@@ -57,7 +57,7 @@ input[type=number],input[type=text]{font:inherit;padding:8px;border-radius:8px;b
 .card.tiny.back{border-width:2px}
 .card.tiny.back::after{border-width:1px;box-shadow:none}
 .card.sel{transform:translateY(-12px);box-shadow:0 0 0 3px var(--gold)}
-.card.chk{box-shadow:0 0 0 2px #e8c35a,0 0 9px 3px rgba(232,195,90,.85)}
+.card.gchk{box-shadow:0 0 0 2px #e8c35a,0 0 9px 3px rgba(232,195,90,.85)}
 .card.pick{box-shadow:0 0 0 3px #00e5ff}
 .card.hint{box-shadow:0 0 0 2px #fff}
 #status{text-align:center;min-height:20px;font-size:14px}
@@ -114,6 +114,27 @@ button:active{transform:scale(.96)}
 .flash{position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(255,224,138,.55),rgba(255,224,138,0) 65%);pointer-events:none;animation:flash .75s ease-out forwards}
 @keyframes flash{from{opacity:1}to{opacity:0}}
 .flycard{box-shadow:0 14px 26px rgba(0,0,0,.5)!important}
+.royal{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden;animation:royin .3s ease-out;direction:ltr}
+.royal.r10{--rc1:#2a1d00;--rc2:#7a5a0a;--rt:#ffd34d}
+.royal.r8{--rc1:#2a0a2e;--rc2:#7a1f6f;--rt:#ff8fe0}
+.royal.r9{--rc1:#06193a;--rc2:#15548c;--rt:#7fd0ff}
+.royal::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,var(--rc2) 0,var(--rc1) 72%);opacity:.94}
+.royal.lost::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 130px 36px rgba(255,40,40,.7);animation:redpulse .55s ease-in-out infinite alternate;pointer-events:none}
+.rays{position:absolute;left:50%;top:45%;width:240vmax;height:240vmax;margin:-120vmax 0 0 -120vmax;background:repeating-conic-gradient(rgba(255,255,255,.15) 0 6deg,transparent 6deg 18deg);animation:spin 9s linear infinite}
+.rcard{position:relative;filter:drop-shadow(0 0 28px var(--rt))}
+.rtitle{position:relative;margin-top:18px;font-size:clamp(28px,9vw,54px);font-weight:900;color:var(--rt);text-shadow:0 4px 18px #000,0 0 24px var(--rt);text-align:center;padding:0 10px;unicode-bidi:plaintext}
+.rline{position:relative;margin-top:8px;font-size:clamp(18px,5.6vw,30px);font-weight:800;color:#fff;text-shadow:0 3px 12px #000;text-align:center;padding:0 14px;unicode-bidi:plaintext}
+.royal.lost .rline{color:#ffb3a8;animation:taunt .5s ease-in-out infinite alternate}
+.rband{position:absolute;left:-15%;width:130%;padding:6px 0;background:var(--rt);color:#1b1200;font-weight:900;letter-spacing:6px;white-space:nowrap;font-size:18px;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+.rband.b1{top:13%;transform:rotate(-12deg);animation:slide1 3.4s linear forwards}
+.rband.b2{bottom:13%;transform:rotate(12deg);animation:slide2 3.4s linear forwards}
+.rem{position:absolute;top:-12%;font-size:32px;pointer-events:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes redpulse{to{opacity:.35}}
+@keyframes taunt{from{transform:rotate(-2.5deg) scale(1)}to{transform:rotate(2.5deg) scale(1.07)}}
+@keyframes royin{from{opacity:0}to{opacity:1}}
+@keyframes slide1{from{transform:translateX(-14%) rotate(-12deg)}to{transform:translateX(4%) rotate(-12deg)}}
+@keyframes slide2{from{transform:translateX(14%) rotate(12deg)}to{transform:translateX(-4%) rotate(12deg)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -199,6 +220,9 @@ const T={
   roundEnd:'نهاية الجولة',item:'البند',mostCards:'أكثر الورق',mostCoins:'أكثر الديناري ♦',haya:'سبعة الديناري (الحاية)',bermila:'أكثر السبعات (البرميلة)',shk:'الشكوبات',total:'المجموع',
   bumped:'تعادل الفريقان في المرحلة الأخيرة، فارتفع هدف الفوز إلى',
   next:'جولة جديدة',newGame:'لعبة جديدة',win:'🎉 فاز فريقك!',lose:'فاز الفريق الآخر',toMenu:'القائمة الرئيسية',
+  royal_king:'شكوبة الملك',royal_queen:'شكوبة البنت',royal_jack:'شكوبة الولد',
+  tauntWin:['كسحتوا الطاولة! 😎','ملوك الطاولة 👑','ما شافوها جاية 😏'],
+  tauntLose:['هدية بالمجان! 🤡','نظّفوا الطاولة عليكم 😏','نايمين؟ 👀','شكراً على الهدية 🫡'],
   style:'الأسلوب',normal:'عادي',realistic:'واقعي (أنتم تحسبون)',
   cutTitle:'قطع الأوراق',runner:'الرانر',cutter:'القاطع',tapCut:'اضغط للقطع',yourCard:'ورقتك:',keep:'احتفظ بها',putDown:'ضعها على الطاولة',
   cutting:'يقطع الأوراق…',deciding:'شاف الورقة ويقرر…',
@@ -233,6 +257,9 @@ const T={
   roundEnd:'Round over',item:'Item',mostCards:'Most cards',mostCoins:'Most diamonds ♦',haya:'Seven of diamonds',bermila:'Most sevens (bermila)',shk:'Chkobbas',total:'Total',
   bumped:'Both teams reached the final stretch together, so the target rose to',
   next:'Next round',newGame:'New game',win:'🎉 Your team won!',lose:'The other team won',toMenu:'Main menu',
+  royal_king:'KING CHKOBBA',royal_queen:'QUEEN CHKOBBA',royal_jack:'JACK CHKOBBA',
+  tauntWin:['You swept the whole table! 😎','Pure royalty 👑','They never saw it coming 😏'],
+  tauntLose:['You just gave it away! 🤡','Cleared out. Thanks for the gift 😏','Was that the plan? 👀','The table says thank you 🫡'],
   style:'Style',normal:'Normal',realistic:'Realistic (you count)',
   cutTitle:'Cut the deck',runner:'Runner',cutter:'Cutter',tapCut:'Tap to cut',yourCard:'Your card:',keep:'Keep it',putDown:'Put it on the table',
   cutting:'is cutting the deck…',deciding:'saw the card and is deciding…',
@@ -293,7 +320,7 @@ function cardSVG(c){
 }
 function cardEl(c,cls=''){const d=document.createElement('div');
   if(!c){d.className='card back '+cls;return d}
-  d.className='card '+(c.chk?'chk ':'')+cls;d.innerHTML=cardSVG(c);return d}
+  d.className='card '+(c.chk?'gchk ':'')+cls;d.innerHTML=cardSVG(c);return d}
 
 /* ================= engine (runs on the host/offline device) ================= */
 const teamOf=(n,s)=>n===2?s:s%2; // 2v2: partners sit across from each other
@@ -866,6 +893,35 @@ function fireworks(){
   };
   requestAnimationFrame(frame);
 }
+function royalChkoba(card,won,pts){
+  const old=document.querySelector('.royal');if(old)old.remove();
+  const ov=document.createElement('div');ov.className='royal '+(won?'won':'lost')+' r'+card.r;
+  const key={10:'royal_king',9:'royal_jack',8:'royal_queen'}[card.r];
+  const lines=t(won?'tauntWin':'tauntLose'),line=lines[Math.floor(Math.random()*lines.length)];
+  const band=Array(14).fill('♛ '+(lang==='ar'?'شكوبة':'CHKOBBA')+' ♚').join('  ');
+  ov.innerHTML=`<div class="rays"></div><div class="rband b1">${band}</div><div class="rband b2">${band}</div>`;
+  const w=Math.min(innerWidth*.5,250),cd=cardEl({s:card.s,r:card.r,id:card.id,chk:true},'rcard');
+  cd.style.width=w+'px';cd.style.height=(w*1.5)+'px';cd.style.cursor='default';
+  const ti=document.createElement('div');ti.className='rtitle';ti.textContent=t(key)+' +'+pts;
+  const li=document.createElement('div');li.className='rline';li.textContent=line;
+  ov.append(cd,ti,li);document.body.appendChild(ov);
+  const kill=()=>{if(!ov.isConnected)return;if(REDUCED){ov.remove();return}ov.animate([{opacity:1},{opacity:0}],{duration:400}).onfinish=()=>ov.remove()};
+  ov.onclick=kill;setTimeout(kill,REDUCED?1800:3400);
+  try{navigator.vibrate&&navigator.vibrate(won?[60,40,60,40,160]:[200,60,200])}catch(e){}
+  if(REDUCED)return;
+  cd.animate([{transform:'translateY(-110vh) rotate(-28deg) scale(1.7)',opacity:0},{transform:'translateY(0) rotate(5deg) scale(1.08)',opacity:1,offset:.55},{transform:'rotate(-3deg) scale(.97)',offset:.75},{transform:'none'}],{duration:850,easing:'cubic-bezier(.3,.7,.3,1)',fill:'backwards'});
+  cd.animate([{transform:'translateY(0) rotate(-1.5deg)'},{transform:'translateY(-10px) rotate(1.5deg)'}],{duration:1400,delay:900,direction:'alternate',iterations:3,easing:'ease-in-out'});
+  ti.animate([{transform:'scale(.2)',opacity:0},{transform:'scale(1.25)',opacity:1,offset:.6},{transform:'scale(1)'}],{duration:600,delay:620,fill:'backwards',easing:'ease-out'});
+  li.animate([{transform:'translateY(40px)',opacity:0},{transform:'none',opacity:1}],{duration:500,delay:950,fill:'backwards',easing:'ease-out'});
+  setTimeout(()=>{ // impact
+    flashScreen();shockwave(innerWidth/2,innerHeight*.42,Math.max(innerWidth,innerHeight)*1.1);sparks(innerWidth/2,innerHeight*.42,70,Math.min(innerWidth,500));
+    try{$('app').animate([{transform:'none'},{transform:'translate(-10px,6px)'},{transform:'translate(9px,-7px)'},{transform:'translate(-6px,-4px)'},{transform:'translate(5px,5px)'},{transform:'none'}],{duration:450})}catch(e){}
+  },470);
+  const em=won?['👑','✨','💰','⭐']:['🤡','😏','👀','💀'];
+  for(let i=0;i<26;i++)setTimeout(()=>{if(!ov.isConnected)return;const e=document.createElement('div');e.className='rem';e.textContent=em[i%em.length];
+    e.style.left=(Math.random()*95)+'%';ov.appendChild(e);
+    e.animate([{transform:`translateY(0) rotate(0)`,opacity:1},{transform:`translateY(${innerHeight*1.2}px) rotate(${(Math.random()*720-360)}deg)`,opacity:1}],{duration:1500+Math.random()*1300,easing:'ease-in'}).onfinish=()=>e.remove()},550+i*65);
+}
 let deckShown=-1;
 function renderDeck(){
   const dp=$('deckPile');dp.className=V.n===4?'n4':'';
@@ -941,7 +997,7 @@ function animateChanges(){
     const ox=o.left+o.width/2,oy=o.top+o.height/2;
     pg.animate([{transform:'none',offset:0},{transform:`translate(${(rects.length?cx:tx)-ox}px,${(rects.length?cy:ty)-oy}px)`,offset:.4},{transform:`translate(${(rects.length?cx:tx)-ox}px,${(rects.length?cy:ty)-oy}px)`,offset:.5},{transform:`translate(${tx-ox}px,${ty-oy}px) scale(.35) rotate(25deg)`,opacity:0,offset:1}],{duration:900,easing:'ease-in-out'}).onfinish=()=>pg.remove();
     setTimeout(()=>{try{const gx=rects.length?cx:tx,gy=rects.length?cy:ty;sparks(gx,gy,ev.shk?10:12,ev.shk?90:60)}catch(e){}},430);
-    if(ev.shk)chkobaFx(ev.shk);
+    if(ev.shk){if(ev.card.r>=8){const won=teamOf(V.n,ev.seat)===teamOf(V.n,V.seat),cd0=ev.card,pts=ev.shk;setTimeout(()=>royalChkoba(cd0,won,pts),650)}else chkobaFx(ev.shk)}
   }
   // score pulse
   if(PREV.scores&&(PREV.scores[0]!==V.scores[0]||PREV.scores[1]!==V.scores[1])){const sc=$('score');sc.classList.remove('pulse');void sc.offsetWidth;sc.classList.add('pulse')}
